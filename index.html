@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Demand Prediction &amp; Replenishment Support</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>:root{
+  --bg:#E8ECF1;--surface:#FFFFFF;--surface2:#F3F5F8;--ink:#0F1B2D;--muted:#586678;--line:#D2D9E2;
+  --accent:#2446D8;--accent-soft:#E3E9FC;--accent-ink:#FFFFFF;
+  --healthy:#13795F;--healthy-bg:#DDF2EA;--reorder:#9A6700;--reorder-bg:#FBEFD0;--urgent:#C4321F;--urgent-bg:#FBE0DB;--over:#5B3FBF;--over-bg:#E8E1FA;
+  --sales:#0F1B2D;--inv:#13795F;--warn:#C4321F;--shadow:0 1px 0 rgba(15,27,45,.04),0 8px 24px -16px rgba(15,27,45,.25);
+  --f-display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif;--f-ui:'Instrument Sans','Segoe UI',system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B131D;--surface:#142130;--surface2:#1B2B3E;--ink:#E7EDF4;--muted:#9AA9BB;--line:#2A3B50;
+  --accent:#7B9BFF;--accent-soft:#1E2E57;--accent-ink:#0B131D;
+  --healthy:#4FD1A5;--healthy-bg:#12372E;--reorder:#F0B849;--reorder-bg:#3A2D0E;--urgent:#FF8672;--urgent-bg:#431E19;--over:#B7A3FF;--over-bg:#2C2455;
+  --sales:#E7EDF4;--inv:#4FD1A5;--warn:#FF8672;--shadow:none}}
+:root[data-theme="dark"]{
+  --bg:#0B131D;--surface:#142130;--surface2:#1B2B3E;--ink:#E7EDF4;--muted:#9AA9BB;--line:#2A3B50;
+  --accent:#7B9BFF;--accent-soft:#1E2E57;--accent-ink:#0B131D;
+  --healthy:#4FD1A5;--healthy-bg:#12372E;--reorder:#F0B849;--reorder-bg:#3A2D0E;--urgent:#FF8672;--urgent-bg:#431E19;--over:#B7A3FF;--over-bg:#2C2455;
+  --sales:#E7EDF4;--inv:#4FD1A5;--warn:#FF8672;--shadow:none}
+*{box-sizing:border-box}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f-ui);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100%}
+.side{background:var(--ink);color:#DCE4EE;padding:20px 14px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;align-self:start;height:100vh}
+:root[data-theme="dark"] .side{background:#0F1A27}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .side{background:#0F1A27}}
+.brand{font:700 17px/1.15 var(--f-display);letter-spacing:-.01em;padding:4px 8px}
+.brand small{display:block;font:500 12px var(--f-ui);color:#93A4B8;margin-top:4px;letter-spacing:0}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{background:none;border:0;text-align:left;padding:9px 10px;border-radius:8px;color:#B9C6D6;display:flex;gap:10px;align-items:center;font-weight:500}
+.nav button:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav button[aria-current="page"]{background:#fff;color:#0F1B2D}
+.nav svg{width:16px;height:16px;flex:none}
+.side-foot{margin-top:auto;font-size:12px;color:#93A4B8;border-top:1px solid rgba(255,255,255,.12);padding-top:12px;line-height:1.45}
+.main{padding:22px 28px 60px;min-width:0}
+.top{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;justify-content:space-between;margin-bottom:18px}
+h1{font:700 28px/1.1 var(--f-display);letter-spacing:-.02em;margin:0}
+.sub{color:var(--muted);margin:4px 0 0;max-width:68ch}
+.badges{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.badge{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:12px;color:var(--muted);display:inline-flex;gap:6px;align-items:center}
+.badge b{color:var(--ink);font-weight:600}
+.badge.demo{border-color:var(--reorder);background:var(--reorder-bg);color:var(--reorder)}
+.badge.demo b{color:var(--reorder)}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px}
+/* pipeline ribbon */
+.ribbon{display:flex;gap:2px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px}
+.stage{flex:1 0 148px;min-width:148px;background:var(--surface);border:0;text-align:left;padding:14px 22px 14px 26px;
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%,16px 50%);margin-left:-10px;position:relative;color:var(--ink)}
+.stage:first-child{margin-left:0;padding-left:16px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,0 100%)}
+.stage:last-child{clip-path:polygon(0 0,100% 0,100% 100%,0 100%,16px 50%);padding-right:14px}
+.stage:first-child:last-child{clip-path:none}
+.stage .k{font-size:12px;color:var(--muted);font-weight:600}
+.stage .v{font:700 25px/1.15 var(--f-display);letter-spacing:-.02em;margin:3px 0 2px;font-variant-numeric:tabular-nums}
+.stage .c{font-size:12px;color:var(--muted);line-height:1.3}
+button.stage:hover{background:var(--surface2)}
+.stage.on{background:var(--accent-soft)}
+.stage.on .k{color:var(--accent)}
+.stage.risk-Urgent{background:var(--urgent-bg)}.stage.risk-Reorder{background:var(--reorder-bg)}.stage.risk-Healthy{background:var(--healthy-bg)}.stage.risk-Overstock{background:var(--over-bg)}
+.stage .v.sm{font-size:19px;padding-top:4px}
+/* cards */
+.card{background:var(--surface);border-radius:12px;box-shadow:var(--shadow);padding:18px;min-width:0}
+.card h2{font:650 16px/1.25 var(--f-display);margin:0 0 4px;letter-spacing:-.01em}
+.card .lede{color:var(--muted);margin:0 0 12px;font-size:13px;max-width:70ch}
+.grid{display:grid;gap:16px}
+.g-main{grid-template-columns:minmax(0,1fr) 320px}
+.g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1180px){.g-main{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:860px){.app{grid-template-columns:1fr}.side{position:static;height:auto;flex-direction:column;padding:12px}.nav{flex-direction:row;overflow-x:auto}.nav button{white-space:nowrap}.side-foot{display:none}.main{padding:16px 14px 50px}.g-2,.g-3{grid-template-columns:1fr}}
+/* controls */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.field input,.field select{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;color:var(--ink);min-width:0}
+.field input[type=range]{padding:0;accent-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;font-weight:600}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08);background:var(--accent)}
+.btn.sm{padding:3px 9px;font-size:12px}
+.btn.ok{background:var(--healthy-bg);color:var(--healthy);border-color:transparent}
+.btn.no{background:var(--surface2);color:var(--muted)}
+/* tables */
+.tw{overflow-x:auto;border-radius:8px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:12px;color:var(--muted);font-weight:600;text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--surface)}
+td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child,th.l,td.l{text-align:left}
+tbody tr:hover{background:var(--surface2)}
+.pname{background:none;border:0;padding:0;text-align:left;font-weight:600;color:var(--ink)}
+.pname:hover{color:var(--accent);text-decoration:underline}
+.pname small{display:block;color:var(--muted);font-weight:400}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.Healthy{background:var(--healthy-bg);color:var(--healthy)}.pill.Reorder{background:var(--reorder-bg);color:var(--reorder)}
+.pill.Urgent{background:var(--urgent-bg);color:var(--urgent)}.pill.Overstock{background:var(--over-bg);color:var(--over)}
+.pill.Urgent::before{border-radius:1px}.pill.Overstock::before{border-radius:0;transform:rotate(45deg)}.pill.Reorder::before{border-radius:50% 50% 0 50%}
+.mut{color:var(--muted)}
+.dec{display:inline-flex;gap:4px}
+.tag{font-size:11px;border-radius:5px;padding:1px 6px;background:var(--surface2);color:var(--muted);font-weight:600;white-space:nowrap}
+.tag.pdf{background:var(--accent-soft);color:var(--accent)}
+.tag.assume{background:var(--reorder-bg);color:var(--reorder)}
+/* charts */
+.chart-wrap{overflow-x:auto;position:relative}
+.chart{display:block;min-width:620px;width:100%;height:auto}
+.chart text{font:11px var(--f-ui);fill:var(--muted)}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--surface);border-radius:8px;padding:8px 10px;font-size:12px;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.3);display:none;line-height:1.5}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--muted);margin:8px 0 0}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.bar{height:10px;border-radius:5px;background:var(--surface2);overflow:hidden;display:flex}
+.bar span{display:block;height:100%}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:0 8px 8px 0;font-size:13px;margin:10px 0}
+.note.warn{border-color:var(--reorder);background:var(--reorder-bg)}
+.formula{font-family:var(--f-display);font-size:16px;background:var(--surface2);border-radius:8px;padding:10px 12px;margin:8px 0;overflow-x:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:0}
+.kv dt{color:var(--muted)}.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+pre.code{background:var(--surface2);border-radius:8px;padding:12px;overflow-x:auto;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;margin:8px 0}
+ul.clean{margin:6px 0;padding-left:18px}ul.clean li{margin:4px 0}
+.overlay{position:fixed;inset:0;background:rgba(5,10,18,.55);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
+.overlay.on{display:flex}
+.modal{background:var(--surface);border-radius:12px;padding:18px;width:min(720px,100%);max-height:86vh;overflow:auto}
+.modal textarea{width:100%;height:260px;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:8px;font:12px ui-monospace,Menlo,Consolas,monospace}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:9px 14px;border-radius:8px;z-index:50;display:none;max-width:90vw}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:no-preference){.view-in{animation:vin .25s ease-out}@keyframes vin{from{opacity:.4}to{opacity:1}}}
+</style></head><body>
+<div class="app">
+ <aside class="side"><div class="brand">Demand Prediction &amp; Replenishment Support<small>Forecast, then decide</small></div>
+  <nav class="nav" id="nav" aria-label="Views"></nav>
+  <div class="side-foot">Forecasting unit: product × location × week. Target: next-week demand. Prototype for a machine learning course project.</div></aside>
+ <main class="main"><header class="top"><div><h1 id="title"></h1><p class="sub" id="subtitle"></p></div>
+  <div class="badges" id="badges"></div><button class="iconbtn" id="theme" aria-label="Toggle light or dark theme">Theme</button></header>
+  <div id="view"></div></main></div>
+<div class="tip" id="tip"></div><div class="toast" id="toast" role="status"></div>
+<div class="overlay" id="overlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><h2 id="modal-title" style="margin-top:0"></h2><p class="mut">Select the text and copy it into a file.</p><textarea id="modal-text" readonly></textarea><div style="margin-top:10px;text-align:right"><button class="btn" data-act="closemodal">Close</button></div></div></div>
+<script>
+/* ====================== CORE: data, model, replenishment ====================== */
+const MS_DAY = 86400000;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function randn(r){let u=0,v;while(u===0)u=r();v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function isoWeekLabel(d){const t=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));const day=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-day);const y=t.getUTCFullYear();const ys=new Date(Date.UTC(y,0,1));const w=Math.ceil(((t-ys)/MS_DAY+1)/7);return y+'-W'+String(w).padStart(2,'0')}
+function isoWeekNum(d){return parseInt(isoWeekLabel(d).split('-W')[1],10)}
+/* Approximate Ramadan windows (moon-sighting dependent) used only as an optional calendar feature. */
+const RAMADAN=[[Date.UTC(2024,2,11),Date.UTC(2024,3,9)],[Date.UTC(2025,2,1),Date.UTC(2025,2,30)],[Date.UTC(2026,1,18),Date.UTC(2026,2,19)],[Date.UTC(2027,1,8),Date.UTC(2027,2,8)]];
+function ramadanFlag(d){if(!d)return 0;const s=d.getTime(),e=s+6*MS_DAY;return RAMADAN.some(([a,b])=>s<=b&&e>=a)?1:0}
+
+const PRODUCTS=[
+ {id:'P001',name:'Cooking oil 5 L',cat:'Edible oils',sup:'S01',base:520,price:2800,amp:.06,ram:.25,promo:.30,lt:5,moq:100},
+ {id:'P002',name:'Basmati rice 5 kg',cat:'Staples',sup:'S02',base:410,price:2300,amp:.05,ram:.20,promo:.25,lt:7,moq:100},
+ {id:'P003',name:'Black tea 950 g',cat:'Beverages',sup:'S03',base:380,price:1900,amp:.08,ram:.30,promo:.20,lt:6,moq:50},
+ {id:'P004',name:'Sugar 5 kg',cat:'Staples',sup:'S02',base:600,price:800,amp:.04,ram:.35,promo:.15,lt:4,moq:200},
+ {id:'P005',name:'Wheat flour 10 kg',cat:'Staples',sup:'S04',base:700,price:1500,amp:.03,ram:.15,promo:.10,lt:3,moq:200},
+ {id:'P006',name:'Soft drink 1.5 L',cat:'Beverages',sup:'S05',base:640,price:200,amp:.35,ram:.10,promo:.30,lt:4,moq:120},
+ {id:'P007',name:'Fruit juice 1 L',cat:'Beverages',sup:'S05',base:360,price:280,amp:.30,ram:.25,promo:.25,lt:5,moq:60},
+ {id:'P008',name:'Cream biscuits',cat:'Snacks',sup:'S06',base:450,price:60,amp:.05,ram:.05,promo:.35,lt:5,moq:100},
+ {id:'P009',name:'UHT milk 1 L',cat:'Dairy',sup:'S07',base:560,price:330,amp:.06,ram:.15,promo:.15,lt:3,moq:120},
+ {id:'P010',name:'Red chili powder 200 g',cat:'Spices',sup:'S08',base:180,price:450,amp:.05,ram:.10,promo:.15,lt:7,moq:40},
+ {id:'P011',name:'Lentils 1 kg',cat:'Staples',sup:'S04',base:330,price:420,amp:.04,ram:.20,promo:.10,lt:6,moq:60},
+ {id:'P012',name:'Instant noodles pack',cat:'Snacks',sup:'S06',base:290,price:400,amp:.08,ram:.00,promo:.30,lt:7,moq:50}];
+const LOCATIONS=[{id:'MUL-01',scale:1.0},{id:'MUL-02',scale:.7},{id:'LHR-01',scale:1.4},{id:'LHR-02',scale:1.1}];
+const N_WEEKS=104;
+const START_DATE=Date.UTC(2024,8,30); // Monday
+
+function generateSyntheticData(seed){
+  const r=mulberry32(seed||20260928);const series=[];
+  for(const p of PRODUCTS){for(const loc of LOCATIONS){
+    const base=p.base*loc.scale*(.85+.3*r());const growth=(r()-.35)*.14;
+    const zs=.6+r()*1.5, mult=r()<.14?2.4+r()*1.6:(r()<.4?.7+r()*.25:1.15+r()*.6);
+    const rows=[];let inv=base*(1.2+r()),pipe=[];
+    for(let w=0;w<N_WEEKS;w++){
+      const date=new Date(START_DATE+w*7*MS_DAY);
+      const woy=isoWeekNum(date);
+      const promo=r()<.12?1:0;
+      const price=Math.round(p.price*(1+.0007*w)*(promo?.9:1)/5)*5||1;
+      const ram=ramadanFlag(date);
+      const season=1+p.amp*Math.sin(2*Math.PI*(woy-12)/52);
+      let d=base*(1+growth*w/N_WEEKS)*season*(ram?1+p.ram:1)*(promo?1+p.promo:1)*Math.exp(.10*randn(r));
+      d=Math.max(0,Math.round(d));
+      const arrive=pipe.filter(o=>o.at<=w).reduce((a,o)=>a+o.q,0);pipe=pipe.filter(o=>o.at>w);
+      const avail=inv+arrive;const sales=Math.min(d,Math.round(avail));const closing=Math.round(avail-sales);
+      const unmet=d-sales;const so=unmet>0?1:0;const backorder=Math.round(unmet*.25);
+      const lt=Math.max(1,Math.round(p.lt+.8*randn(r)));
+      const incPre=Math.round(pipe.reduce((a,o)=>a+o.q,0));
+      inv=closing;
+      const row={w,date,week:isoWeekLabel(date),sales,closing,incoming:incPre,backorder,so,price,promo,lt,ram};
+      rows.push(row);
+      {
+        const h=rows.slice(-4).map(x=>x.sales);const m4=mean(h);
+        const h8=rows.slice(-8).map(x=>x.sales);const m8=mean(h8);
+        const sd=std(h8);
+        const Lw=lt/7;const ip=closing+incPre-backorder;
+        const rop=m4*(Lw+.6)+zs*sd*Math.sqrt(Lw);
+        if(ip<=rop){
+          const tgt=(m4*1.2+zs*sd)*mult;let q=Math.max(0,Math.round(tgt-ip));
+          if(q>0){q=Math.max(q,p.moq);const delay=r()<.07?1:0;pipe.push({at:w+1+Math.ceil(Math.max(0,lt-7)/7)+delay,q});row.incoming=incPre+q;}
+        }
+      }
+    }
+    series.push({key:p.id+'|'+loc.id,pid:p.id,loc:loc.id,name:p.name,cat:p.cat,sup:p.sup,moq:p.moq,rows});
+  }}
+  return series;
+}
+
+/* ---------- stats helpers ---------- */
+const sum=a=>a.reduce((x,y)=>x+y,0);
+const mean=a=>a.length?sum(a)/a.length:0;
+const std=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(sum(a.map(x=>(x-m)**2))/a.length)};
+
+/* ---------- features (all computed from information available at forecast origin t) ---------- */
+const FEATURE_NAMES=['Intercept','Lag_1','Lag_2','Lag_4','Lag_8','Lag_12','Rolling_Mean_4','Rolling_Mean_8','Rolling_STD_8','Sales_Trend_4','Inventory_Coverage','Stockout_Flag (origin week)','Price_Change','Promotion (planned, target week)','Ramadan (target week)','Season_sin','Season_cos'];
+const MIN_ORIGIN=11;
+function features(rows,t,plan){
+  const s=i=>rows[i].sales;
+  const win=k=>{const a=[];for(let i=t-k+1;i<=t;i++)a.push(s(i));return a};
+  const m4=mean(win(4)),m8=mean(win(8)),m12=mean(win(12));
+  const sc=Math.max(1,m12);
+  const tgt=rows[t+1]||plan;           // target week info (planned promo / calendar are known in advance)
+  const tdate=tgt.date;
+  const woy=tdate?isoWeekNum(tdate):1;
+  const cov=Math.min(6,rows[t].closing/Math.max(1,m4));
+  const pc=rows[t-1]?rows[t].price/Math.max(1,rows[t-1].price)-1:0;
+  return {x:[1,s(t)/sc,s(t-1)/sc,s(t-3)/sc,s(t-7)/sc,s(t-11)/sc,m4/sc,m8/sc,std(win(8))/sc,(m4-m12)/sc,cov,rows[t].so,pc,tgt.promo||0,tgt.ram||0,Math.sin(2*Math.PI*woy/52),Math.cos(2*Math.PI*woy/52)],sc,m4};
+}
+function solveRidge(X,y,lambda){
+  const p=X[0].length;const A=Array.from({length:p},()=>new Array(p+1).fill(0));
+  for(let n=0;n<X.length;n++){const x=X[n];for(let i=0;i<p;i++){for(let j=0;j<p;j++)A[i][j]+=x[i]*x[j];A[i][p]+=x[i]*y[n]}}
+  for(let i=1;i<p;i++)A[i][i]+=lambda*X.length;
+  for(let c=0;c<p;c++){let piv=c;for(let r2=c+1;r2<p;r2++)if(Math.abs(A[r2][c])>Math.abs(A[piv][c]))piv=r2;[A[c],A[piv]]=[A[piv],A[c]];
+    const d=A[c][c]||1e-9;for(let j=c;j<=p;j++)A[c][j]/=d;
+    for(let r2=0;r2<p;r2++){if(r2===c)continue;const f=A[r2][c];if(f)for(let j=c;j<=p;j++)A[r2][j]-=f*A[c][j]}}
+  return A.map(row=>row[p]);
+}
+const dot=(a,b)=>{let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s};
+
+function splitBounds(n){return {tr:Math.floor(n*.70),va:Math.floor(n*.85)}}   // target-week index boundaries
+function metrics(pairs){ // pairs of [forecast, actual]
+  if(!pairs.length)return null;
+  const e=pairs.map(([f,a])=>f-a);const A=sum(pairs.map(p=>p[1]));
+  return {n:pairs.length,mae:mean(e.map(Math.abs)),rmse:Math.sqrt(mean(e.map(x=>x*x))),wape:A?sum(e.map(Math.abs))/A:NaN,bias:mean(e),biasPct:A?sum(e)/A:NaN};
+}
+function sampleSet(series,lo,hi,excludeCensored){ // origins whose target index in [lo,hi)
+  const out=[];
+  for(const s of series){const n=s.rows.length;
+    for(let tg=Math.max(lo,MIN_ORIGIN+1);tg<Math.min(hi,n);tg++){
+      if(excludeCensored&&s.rows[tg].so)continue;
+      out.push({s,t:tg-1});}}
+  return out;
+}
+function trainModel(series,opts){
+  const n=Math.min(...series.map(s=>s.rows.length));const {tr,va}=splitBounds(n);
+  const mk=(lo,hi,excl)=>{const smp=sampleSet(series,lo,hi,excl);return {X:smp.map(o=>features(o.s.rows,o.t).x),y:smp.map(o=>{const f=features(o.s.rows,o.t);return o.s.rows[o.t+1].sales/f.sc}),smp}};
+  const train=mk(0,tr,opts.excludeCensored);
+  const val=mk(tr,va,true);
+  let best=null;const grid=[.0005,.002,.01,.05,.2];const tuning=[];
+  for(const lam of grid){
+    const b=solveRidge(train.X,train.y,lam);
+    const pairs=val.smp.map((o,i)=>{const f=features(o.s.rows,o.t);return [Math.max(0,dot(b,f.x))*f.sc,o.s.rows[o.t+1].sales]});
+    const m=metrics(pairs);tuning.push({lam,mae:m.mae});
+    if(!best||m.mae<best.mae)best={lam,mae:m.mae,b};
+  }
+  // refit on all labelled rows (train+val+test) with chosen lambda for live next-week forecasts
+  const all=mk(0,n,opts.excludeCensored);
+  const bFinal=solveRidge(all.X,all.y,best.lam);
+  return {beta:best.b,betaFinal:bFinal,lambda:best.lam,tuning,bounds:{tr,va,n},nTrain:train.X.length,nVal:val.X.length};
+}
+function evaluateAll(series,model){
+  const {tr,va,n}=model.bounds;const test=sampleSet(series,va,n,true);
+  const row=(fn)=>metrics(test.map(o=>[fn(o),o.s.rows[o.t+1].sales]));
+  return {
+    n:test.length,
+    naive:row(o=>o.s.rows[o.t].sales),
+    ma4:row(o=>features(o.s.rows,o.t).m4),
+    ridge:row(o=>{const f=features(o.s.rows,o.t);return Math.max(0,dot(model.beta,f.x))*f.sc})
+  };
+}
+function oneStepPredictions(s,model){ // for chart: prediction for every target idx >= 12 using the train/val-fitted model
+  const out=new Array(s.rows.length).fill(null);
+  for(let tg=MIN_ORIGIN+1;tg<s.rows.length;tg++){const f=features(s.rows,tg-1);out[tg]=Math.max(0,dot(model.beta,f.x))*f.sc}
+  return out;
+}
+function seriesMetricsTest(s,model){
+  const {va,n}=model.bounds;const pairs=[];const np=[],mp=[];
+  for(let tg=Math.max(va,MIN_ORIGIN+1);tg<s.rows.length;tg++){if(s.rows[tg].so)continue;const f=features(s.rows,tg-1);
+    pairs.push([Math.max(0,dot(model.beta,f.x))*f.sc,s.rows[tg].sales]);np.push([s.rows[tg-1].sales,s.rows[tg].sales]);mp.push([f.m4,s.rows[tg].sales])}
+  return {ridge:metrics(pairs),naive:metrics(np),ma4:metrics(mp)};
+}
+function nextWeekDate(s){const last=s.rows[s.rows.length-1].date;return last?new Date(last.getTime()+7*MS_DAY):null}
+function baselineForecast(s,model,promoNext){
+  const rows=s.rows,t=rows.length-1;const nd=nextWeekDate(s);
+  const plan={date:nd,promo:promoNext?1:0,ram:ramadanFlag(nd)};
+  const f=features(rows,t,plan);
+  return Math.max(0,dot(model.betaFinal,f.x))*f.sc;
+}
+
+/* ---------- replenishment layer (follows the PDF: forecast -> inventory position -> safety stock -> ROP -> order) ---------- */
+const Z_TABLE={'90':1.2816,'95':1.6449,'97.5':1.96,'99':2.3263};
+const DEFAULT_POLICY={service:'95',urgentPct:50,overstockMult:2,excludeCensored:true};
+function replenish(s,forecastBase,policy,ov){
+  ov=ov||{};const last=s.rows[s.rows.length-1];
+  const adj=ov.adj||0;const F=Math.max(0,forecastBase*(1+adj/100));
+  const L=ov.lt!=null?ov.lt:last.lt;const Lw=L/7;
+  const z=Z_TABLE[policy.service];
+  const sigma=std(s.rows.slice(-12).map(r=>r.sales));
+  const SS=z*sigma*Math.sqrt(Lw);
+  const LTD=F*Lw;const ROP=LTD+SS;
+  const IP=last.closing+last.incoming-last.backorder;
+  const target=F+SS;
+  const moq=ov.moq!=null?ov.moq:s.moq;const cap=ov.cap||0;
+  const dailyF=F/7;const coverDays=dailyF>0?last.closing/dailyF:Infinity;
+  let status='Healthy';
+  if(IP<=ROP)status=(IP<ROP*policy.urgentPct/100)?'Urgent':'Reorder';
+  else if(IP>target*policy.overstockMult)status='Overstock Risk';
+  let raw=IP<=ROP?Math.max(0,target-IP):0;
+  let qty=raw,notes=[];
+  if(raw>0&&qty<moq){qty=moq;notes.push('Raised to MOQ')}
+  if(cap>0&&raw>0&&IP+qty>cap){const room=Math.max(0,cap-IP);qty=room;notes.push(room>0?'Limited by storage capacity':'No storage room')}
+  qty=Math.round(qty);
+  return {key:s.key,F,Fbase:forecastBase,adj,L,Lw,z,sigma,SS,LTD,ROP,IP,target,raw,qty,moq,cap,notes,status,coverDays,
+          stock:last.closing,incoming:last.incoming,backorder:last.backorder,lastSales:last.sales,m4:mean(s.rows.slice(-4).map(r=>r.sales))};
+}
+/* ---------- CSV ---------- */
+function parseCSV(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}
+    else if(c==='"')q=true;else if(c===','){row.push(cur);cur=''}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cur);cur='';if(row.some(x=>x.trim()!==''))rows.push(row);row=[]}
+    else cur+=c}
+  row.push(cur);if(row.some(x=>x.trim()!==''))rows.push(row);
+  return rows;
+}
+const normKey=k=>k.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+function seriesFromCSV(text){
+  const t=parseCSV(text);if(t.length<2)throw new Error('The file has no data rows.');
+  const hdr=t[0].map(normKey);const idx=n=>hdr.indexOf(normKey(n));
+  const req=['Week','Product_ID','Location_ID','Sales_Qty','Closing_Inventory'];
+  const miss=req.filter(c=>idx(c)<0);if(miss.length)throw new Error('Missing required column(s): '+miss.join(', ')+'.');
+  const g=(r,c,d)=>{const i=idx(c);return i<0||r[i]===undefined||r[i].trim()===''?d:r[i].trim()};
+  const num=(v,d)=>{const x=parseFloat(v);return isNaN(x)?d:x};
+  const groups=new Map();const notes=new Set();
+  for(let i=1;i<t.length;i++){const r=t[i];
+    const pid=g(r,'Product_ID'),loc=g(r,'Location_ID');if(!pid||!loc)continue;
+    const k=pid+'|'+loc;if(!groups.has(k))groups.set(k,{pid,loc,name:g(r,'Product_Name',pid),cat:g(r,'Product_Category','Uncategorised'),sup:g(r,'Supplier_ID','—'),rows:[]});
+    const wk=g(r,'Week');let date=null;const m=wk.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m)date=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));
+    const closing=num(g(r,'Closing_Inventory'),0);
+    const soRaw=g(r,'Stockout_Flag',null);
+    if(soRaw===null)notes.add('Stockout_Flag not provided: derived as Closing_Inventory = 0 (approximation).');
+    if(idx('Lead_Time_Days')<0)notes.add('Lead_Time_Days not provided: defaulted to 5 days.');
+    if(idx('Incoming_Inventory')<0)notes.add('Incoming_Inventory not provided: defaulted to 0.');
+    if(idx('Backorder_Qty')<0)notes.add('Backorder_Qty not provided: defaulted to 0.');
+    groups.get(k).rows.push({wk,date,sales:num(g(r,'Sales_Qty'),0),closing,incoming:num(g(r,'Incoming_Inventory'),0),backorder:num(g(r,'Backorder_Qty'),0),
+      so:soRaw===null?(closing===0?1:0):(parseFloat(soRaw)>0?1:0),price:num(g(r,'Selling_Price'),0),promo:num(g(r,'Promotion_Flag'),0)>0?1:0,lt:num(g(r,'Lead_Time_Days'),5)});
+  }
+  const series=[];
+  for(const [k,v] of groups){
+    v.rows.sort((a,b)=>a.date&&b.date?a.date-b.date:(a.wk<b.wk?-1:a.wk>b.wk?1:0));
+    if(v.rows.length<30)continue;
+    v.rows.forEach((x,i)=>{x.w=i;x.week=x.date?isoWeekLabel(x.date):x.wk;x.ram=ramadanFlag(x.date)});
+    series.push({key:k,pid:v.pid,loc:v.loc,name:v.name,cat:v.cat,sup:v.sup,moq:1,rows:v.rows});
+  }
+  if(!series.length)throw new Error('No product-location series with at least 30 weekly rows were found.');
+  const minN=Math.min(...series.map(s=>s.rows.length));
+  series.forEach(s=>{s.rows=s.rows.slice(-minN);s.rows.forEach((x,i)=>x.w=i)});
+  if(!idx('Promotion_Flag')<0)notes.add('Promotion_Flag not provided: treated as 0.');
+  if(idx('Promotion_Flag')<0)notes.add('Promotion_Flag not provided: treated as 0.');
+  if(idx('Selling_Price')<0)notes.add('Selling_Price not provided: Price_Change feature is 0.');
+  return {series,notes:[...notes],dropped:groups.size-series.length};
+}
+
+/* ====================== UI ====================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>(n==null||!isFinite(n))?'—':Math.round(n).toLocaleString('en-US');
+const fmt1=n=>(n==null||!isFinite(n))?'—':(Math.round(n*10)/10).toLocaleString('en-US');
+const pct=n=>(n==null||!isFinite(n))?'—':(n*100).toFixed(1)+'%';
+const statusKey=s=>s==='Overstock Risk'?'Overstock':s;
+const SEV={Urgent:0,Reorder:1,'Overstock Risk':2,Healthy:3};
+const pill=s=>`<span class="pill ${statusKey(s)}">${s}</span>`;
+
+const state={view:'overview',series:[],model:null,eval:null,res:[],byKey:{},sel:null,stage:1,
+  policy:Object.assign({},DEFAULT_POLICY,{urgentPct:65}),source:'baseline',imported:null,importedInfo:null,
+  filt:{loc:'all',cat:'all',q:'',status:'all'},ov:{},decisions:{},
+  data:{kind:'synthetic',label:'Synthetic demonstration data',notes:[]},pendingFile:null};
+
+function compute(retrain){
+  if(retrain||!state.model){state.model=trainModel(state.series,{excludeCensored:state.policy.excludeCensored});state.eval=evaluateAll(state.series,state.model)}
+  state.res=state.series.map(s=>{
+    const ov=state.ov[s.key]||{};let F,src='baseline';
+    if(state.source==='imported'&&state.imported&&state.imported.has(s.key)){F=state.imported.get(s.key);src='imported'}
+    else F=baselineForecast(s,state.model,ov.promo);
+    const r=replenish(s,F,state.policy,ov);r.src=src;r.s=s;return r});
+  state.byKey=Object.fromEntries(state.res.map(r=>[r.key,r]));
+  if(!state.sel||!state.byKey[state.sel])state.sel=(state.res.slice().sort((a,b)=>SEV[a.status]-SEV[b.status]||b.qty-a.qty)[0]||{}).key;
+}
+function srcLabel(){return state.source==='imported'&&state.imported?'Imported forecasts (CSV)':'Demonstration baseline (ridge regression, in browser)'}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3200)}
+function weeksOf(){return state.series[0]?state.series[0].rows.length:0}
+
+/* ---------- chart helper ---------- */
+const charts={};
+function chart(o){
+  const W=860,H=o.h||270,L=48,R=16,T=14,B=28;const n=o.xs.length;
+  const X=i=>L+i*(W-L-R)/Math.max(1,n-1);
+  let ymax=o.yMax;if(ymax==null){ymax=0;o.lines.forEach(l=>l.vals.forEach(v=>{if(v!=null&&v>ymax)ymax=v}));ymax*=1.1}
+  const nice=(()=>{const p=Math.pow(10,Math.floor(Math.log10(ymax||1)));const f=ymax/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p})();ymax=nice;
+  const Y=v=>T+(H-T-B)*(1-v/ymax);
+  let s=`<svg class="chart" id="${o.id}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.label||'chart')}">`;
+  for(let k=0;k<=4;k++){const v=ymax*k/4;s+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end">${fmt(v)}</text>`}
+  (o.bands||[]).forEach(b=>{s+=`<rect x="${X(b.i0)}" y="${T}" width="${Math.max(0,X(b.i1)-X(b.i0))}" height="${H-T-B}" fill="${b.color}" opacity="${b.op||.07}"/><text x="${X(b.i0)+6}" y="${T+11}" fill="${b.color}" style="fill:${b.color};font-weight:600">${b.label}</text>`});
+  const step=Math.ceil(n/8);
+  o.xs.forEach((x,i)=>{if(i%step===0||i===n-1&&n-1-(Math.floor((n-1)/step)*step)>step/2)s+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle">${x}</text>`});
+  o.lines.forEach(l=>{
+    let d='',started=false;l.vals.forEach((v,i)=>{if(v==null){started=false;return}d+=(started?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1);started=true});
+    if(l.area){const pts=l.vals.map((v,i)=>v==null?null:[X(i),Y(v)]).filter(Boolean);if(pts.length)s+=`<path d="M${pts[0][0]} ${Y(0)} ${pts.map(p=>'L'+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ')} L${pts[pts.length-1][0]} ${Y(0)}Z" fill="${l.color}" opacity=".08"/>`}
+    s+=`<path d="${d}" fill="none" stroke="${l.color}" stroke-width="${l.w||2}" ${l.dash?`stroke-dasharray="${l.dash}"`:''} stroke-linejoin="round" stroke-linecap="round"/>`;
+    (l.dots||[]).forEach(i=>{if(l.vals[i]!=null)s+=`<circle cx="${X(i)}" cy="${Y(l.vals[i])}" r="${l.dotR||5}" fill="${l.dotFill||l.color}" stroke="var(--surface)" stroke-width="2"/>`});
+  });
+  (o.markers||[]).forEach(m=>{s+=`<circle cx="${X(m.i)}" cy="${Y(m.y)}" r="3.5" fill="${m.color}" stroke="var(--surface)" stroke-width="1"/>`});
+  s+=`<line id="${o.id}-x" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/></svg>`;
+  charts[o.id]={xs:o.xs,lines:o.lines,L,R,W,n,tipExtra:o.tipExtra};
+  const lg=o.lines.filter(l=>l.name).map(l=>`<span><i style="background:${l.color};${l.dash?'height:0;border-top:2px dashed '+l.color+';background:none':''}"></i>${l.name}</span>`).join('')+(o.legendExtra||'');
+  return `<div class="chart-wrap">${s}</div><div class="legend">${lg}</div>`;
+}
+document.addEventListener('mousemove',e=>{
+  const svg=e.target.closest&&e.target.closest('svg.chart');const tip=$('#tip');
+  if(!svg||!charts[svg.id]){tip.style.display='none';document.querySelectorAll('svg.chart line[id$="-x"]').forEach(l=>l.style.display='none');return}
+  const c=charts[svg.id];const rect=svg.getBoundingClientRect();const vx=(e.clientX-rect.left)/rect.width*c.W;
+  let i=Math.round((vx-c.L)/((c.W-c.L-c.R)/Math.max(1,c.n-1)));i=Math.max(0,Math.min(c.n-1,i));
+  const x=c.L+i*(c.W-c.L-c.R)/Math.max(1,c.n-1);const ln=document.getElementById(svg.id+'-x');ln.setAttribute('x1',x);ln.setAttribute('x2',x);ln.style.display='';
+  let h=`<b>${c.xs[i]}</b>`;c.lines.forEach(l=>{if(l.name&&l.vals[i]!=null)h+=`<br><span style="color:${l.tipColor||l.color}">●</span> ${l.name}: ${fmt(l.vals[i])}`});
+  if(c.tipExtra)h+=c.tipExtra(i);
+  tip.innerHTML=h;tip.style.display='block';tip.style.left=Math.min(window.innerWidth-190,e.clientX+14)+'px';tip.style.top=(e.clientY+14)+'px';
+});
+
+/* ---------- pipeline ribbon ---------- */
+function ribbon(stages,active,interactive){
+  return `<div class="ribbon" role="list" aria-label="Replenishment pipeline">`+stages.map((s,i)=>{
+    const cls=`stage ${i===active?'on':''} ${s.cls||''}`;
+    const inner=`<div class="k">${s.k}</div><div class="v ${s.sm?'sm':''}">${s.v}</div><div class="c">${s.c||''}</div>`;
+    return interactive?`<button class="${cls}" data-act="stage" data-i="${i}" role="listitem" ${i===active?'aria-current="true"':''}>${inner}</button>`:`<div class="${cls}" role="listitem">${inner}</div>`}).join('')+`</div>`;
+}
+function exportText(filename,text){
+  (async()=>{try{const dl=window.claude&&claude.use?await claude.use('downloads'):null;if(dl){await dl.save({filename,data:text});return}}catch(e){if(e&&e.code==='declined')return}
+    $('#modal-title').textContent=filename;$('#modal-text').value=text;$('#overlay').classList.add('on');$('#modal-text').select()})();
+}
+
+/* ---------- VIEW: overview ---------- */
+function filteredRes(){
+  const f=state.filt;return state.res.filter(r=>(f.loc==='all'||r.s.loc===f.loc)&&(f.cat==='all'||r.s.cat===f.cat)&&(f.status==='all'||r.status===f.status)
+    &&(!f.q||(r.s.name+' '+r.s.pid+' '+r.s.loc).toLowerCase().includes(f.q.toLowerCase())));
+}
+function decisionCell(r){
+  const d=state.decisions[r.key];
+  if(r.qty<=0)return '<span class="mut">No order</span>';
+  if(d&&d.status==='approved')return `<span class="dec"><span class="tag" style="background:var(--healthy-bg);color:var(--healthy)">Approved ${fmt(d.qty)}</span><button class="btn sm" data-act="undec" data-key="${r.key}">Undo</button></span>`;
+  if(d&&d.status==='deferred')return `<span class="dec"><span class="tag">Deferred</span><button class="btn sm" data-act="undec" data-key="${r.key}">Undo</button></span>`;
+  return `<span class="dec"><button class="btn sm ok" data-act="approve" data-key="${r.key}">Approve</button><button class="btn sm no" data-act="defer" data-key="${r.key}">Defer</button></span>`;
+}
+function viewOverview(){
+  const all=state.res;const rs=filteredRes();const W=weeksOf();
+  const cnt=st=>all.filter(r=>r.status===st).length;
+  const base=all.filter(r=>(state.filt.loc==='all'||r.s.loc===state.filt.loc)&&(state.filt.cat==='all'||r.s.cat===state.filt.cat));
+  const agg=(arr,k)=>sum(arr.map(r=>r[k]));
+  const orders=base.filter(r=>r.qty>0);
+  const ap=orders.filter(r=>state.decisions[r.key]&&state.decisions[r.key].status==='approved').length;
+  const df=orders.filter(r=>state.decisions[r.key]&&state.decisions[r.key].status==='deferred').length;
+  const atRisk=base.filter(r=>r.status==='Urgent'||r.status==='Reorder').length;
+  const stages=[
+   {k:'Historical data',v:fmt(sum(base.map(r=>r.s.rows.length))),c:`rows · ${base.length} series · ${W} weeks`},
+   {k:'Demand forecast',v:fmt(agg(base,'F')),c:`units next week · ${state.source==='imported'?'imported':'demo baseline'}`},
+   {k:'Inventory analysis',v:fmt(agg(base,'IP')),c:'units in inventory position'},
+   {k:'Safety stock',v:fmt(agg(base,'SS')),c:`units at ${state.policy.service}% service level`},
+   {k:'Reorder point',v:fmt(agg(base,'ROP')),c:`${base.filter(r=>r.IP<=r.ROP).length} series at or below`},
+   {k:'Stock risk',v:fmt(atRisk),c:`series to reorder · ${base.filter(r=>r.status==='Urgent').length} urgent · ${base.filter(r=>r.status==='Overstock Risk').length} overstock`},
+   {k:'Recommended order',v:fmt(agg(base,'qty')),c:`units across ${orders.length} orders`},
+   {k:'Managerial decision',v:`${ap}/${orders.length}`,c:`approved · ${df} deferred · ${orders.length-ap-df} pending`}];
+  rs.sort((a,b)=>SEV[a.status]-SEV[b.status]||b.qty-a.qty);
+  const locs=[...new Set(state.series.map(s=>s.loc))],cats=[...new Set(state.series.map(s=>s.cat))];
+  const chips=['all','Urgent','Reorder','Overstock Risk','Healthy'].map(st=>`<button class="chip" data-act="statusf" data-v="${st}" aria-pressed="${state.filt.status===st}">${st==='all'?'All':st} ${st==='all'?'('+all.length+')':'('+cnt(st)+')'}</button>`).join('');
+  const rows=rs.map(r=>`<tr>
+    <td><button class="pname" data-act="open" data-key="${r.key}">${esc(r.s.name)}<small>${esc(r.s.pid)} · ${esc(r.s.cat)}</small></button></td>
+    <td class="l">${esc(r.s.loc)}</td><td>${fmt(r.stock)}</td><td>${fmt(r.incoming)}</td><td>${fmt(r.IP)}</td><td><b>${fmt(r.F)}</b></td>
+    <td>${fmt(r.SS)}</td><td>${fmt(r.ROP)}</td><td><b>${fmt(r.qty)}</b></td><td class="l">${pill(r.status)}</td><td class="l">${decisionCell(r)}</td></tr>`).join('');
+  // status by location
+  const byLoc=locs.map(l=>{const a=all.filter(r=>r.s.loc===l);const tot=a.length;const seg=['Urgent','Reorder','Overstock Risk','Healthy'].map(st=>{const c=a.filter(r=>r.status===st).length;return `<span title="${st}: ${c}" style="width:${c/tot*100}%;background:var(--${st==='Urgent'?'urgent':st==='Reorder'?'reorder':st==='Healthy'?'healthy':'over'})"></span>`}).join('');
+    return `<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><b>${esc(l)}</b><span class="mut">${a.filter(r=>r.qty>0).length} orders · ${fmt(sum(a.map(r=>r.qty)))} units</span></div><div class="bar" style="margin-top:4px">${seg}</div></div>`}).join('');
+  const queue=state.res.filter(r=>state.decisions[r.key]&&state.decisions[r.key].status==='approved');
+  return `<div class="view-in">${ribbon(stages,-1,false)}
+  <div class="grid g-main">
+   <div class="card">
+     <h2>Replenishment actions</h2>
+     <p class="lede">Every product-location series, ranked by risk. Open a row to see how its recommendation was calculated.</p>
+     <div class="toolbar">
+       <label class="field">Location<select data-act="floc"><option value="all">All locations</option>${locs.map(l=>`<option ${state.filt.loc===l?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
+       <label class="field">Category<select data-act="fcat"><option value="all">All categories</option>${cats.map(l=>`<option ${state.filt.cat===l?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
+       <label class="field">Search<input type="search" data-act="fq" value="${esc(state.filt.q)}" placeholder="Product or ID"></label>
+     </div>
+     <div class="chips" style="margin-bottom:12px">${chips}</div>
+     <div class="tw" style="max-height:640px"><table><thead><tr><th>Product</th><th class="l">Location</th><th>Stock</th><th>On order</th><th>Inv. position</th><th>Forecast</th><th>Safety stock</th><th>Reorder point</th><th>Order qty</th><th class="l">Status</th><th class="l">Decision</th></tr></thead><tbody>${rows||'<tr><td colspan="11" class="l mut">No series match these filters. Clear the search or choose another status.</td></tr>'}</tbody></table></div>
+   </div>
+   <div style="display:flex;flex-direction:column;gap:16px">
+     <div class="card"><h2>Order queue</h2><p class="lede">Approved recommendations ready for the supplier.</p>
+       <dl class="kv"><dt>Approved orders</dt><dd>${queue.length}</dd><dt>Units</dt><dd>${fmt(sum(queue.map(r=>state.decisions[r.key].qty)))}</dd></dl>
+       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px"><button class="btn primary" data-act="approveall">Approve all urgent and reorder</button><button class="btn" data-act="exportq" ${queue.length?'':'disabled'}>Export queue as CSV</button></div></div>
+     <div class="card"><h2>Stock status by location</h2><p class="lede">Share of series in each status.</p>${byLoc}
+       <div class="legend"><span><i style="background:var(--urgent)"></i>Urgent</span><span><i style="background:var(--reorder)"></i>Reorder</span><span><i style="background:var(--over)"></i>Overstock risk</span><span><i style="background:var(--healthy)"></i>Healthy</span></div></div>
+     <div class="note warn" style="margin:0"><b>Reading these numbers.</b> Stock, orders and demand come from ${esc(state.data.label.toLowerCase())}. Forecasts come from the ${esc(srcLabel().toLowerCase())}. XGBoost, the project's production model, is not running in this page.</div>
+   </div>
+  </div></div>`;
+}
+
+/* ---------- VIEW: workbench ---------- */
+function gauge(r){
+  const W=700,H=150,L=10,R=20;const mx=Math.max(r.IP+r.qty,r.target,r.ROP,r.cap||0,r.stock+r.incoming)*1.12||1;const X=v=>L+(v/mx)*(W-L-R);
+  const row=(y,label,parts)=>`<text x="${L}" y="${y-6}">${label}</text>`+parts;
+  const b1=`<rect x="${X(0)}" y="46" width="${X(r.stock)-X(0)}" height="24" fill="var(--accent)" rx="3"/><rect x="${X(r.stock)}" y="46" width="${X(r.stock+r.incoming)-X(r.stock)}" height="24" fill="url(#hatch)" stroke="var(--accent)" rx="3"/>`+
+    (r.backorder>0?`<rect x="${X(r.stock+r.incoming-r.backorder)}" y="46" width="${X(r.stock+r.incoming)-X(r.stock+r.incoming-r.backorder)}" height="24" fill="var(--urgent)" opacity=".75" rx="3"/>`:'');
+  const b2=`<rect x="${X(0)}" y="100" width="${X(Math.max(0,r.IP))-X(0)}" height="24" fill="var(--accent)" opacity=".55" rx="3"/>`+(r.qty>0?`<rect x="${X(Math.max(0,r.IP))}" y="100" width="${X(Math.max(0,r.IP)+r.qty)-X(Math.max(0,r.IP))}" height="24" fill="none" stroke="var(--reorder)" stroke-width="2" stroke-dasharray="5 3" rx="3"/>`:'');
+  const mk=(v,lab,col,y)=>`<line x1="${X(v)}" x2="${X(v)}" y1="30" y2="132" stroke="${col}" stroke-width="2"/><text x="${X(v)}" y="${y}" text-anchor="middle" style="fill:${col};font-weight:600">${lab} ${fmt(v)}</text>`;
+  const capm=r.cap>0?`<line x1="${X(r.cap)}" x2="${X(r.cap)}" y1="30" y2="132" stroke="var(--muted)" stroke-dasharray="2 3"/><text x="${X(r.cap)}" y="144" text-anchor="middle">Capacity ${fmt(r.cap)}</text>`:'';
+  return `<div class="chart-wrap"><svg class="chart" viewBox="0 0 ${W} ${H}" style="min-width:560px" role="img" aria-label="Stock position against reorder point and target inventory"><defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="var(--accent-soft)"/><line x1="0" y1="0" x2="0" y2="6" stroke="var(--accent)" stroke-width="2"/></pattern></defs>
+   ${row(46,'Today: stock + on order − backorders',b1)}${row(100,'After recommended order',b2)}${mk(r.ROP,'Reorder point','var(--reorder)',20)}${mk(r.target,'Target','var(--ink)',14).replace('y1="30"','y1="22"')}${capm}</svg></div>
+   <div class="legend"><span><i style="background:var(--accent)"></i>On hand</span><span><i style="background:var(--accent-soft);border:1px solid var(--accent);height:8px"></i>On order</span><span><i style="background:var(--urgent)"></i>Backorders</span><span><i style="border-top:2px dashed var(--reorder);background:none;height:0"></i>Recommended order</span></div>`;
+}
+function stageExplain(r,i){
+  const s=r.s,last=s.rows[s.rows.length-1];const f=fmt;
+  const E=[
+   [`Historical data`,`<p>The pipeline starts from weekly Product × Location × Week records: <i>Sales_Qty, Closing_Inventory, Incoming_Inventory, Backorder_Qty, Stockout_Flag, Selling_Price, Promotion_Flag, Lead_Time_Days</i>. Forecast features are built only from information available at the forecast origin (end of ${esc(last.week)}).</p>
+    <dl class="kv"><dt>Latest week</dt><dd>${esc(last.week)}</dd><dt>Sales last week</dt><dd>${f(r.lastSales)}</dd><dt>4-week average</dt><dd>${f(r.m4)}</dd><dt>Weeks of history</dt><dd>${s.rows.length}</dd><dt>Stockout weeks (censored demand)</dt><dd>${sum(s.rows.map(x=>x.so))}</dd></dl>`],
+   [`Demand forecast`,r.src==='imported'?`<p>This value was imported from your forecast CSV (for example, XGBoost output generated in the Python pipeline). The dashboard did not compute it.</p>`:
+     `<p>Source: <b>demonstration baseline</b>. A ridge linear regression on lag, rolling, inventory-coverage, promotion and calendar features, trained in your browser on the chronological training weeks. It stands in for the production XGBoost Regressor, which is not running here.</p>`,
+     `<dl class="kv"><dt>Model forecast</dt><dd>${f(r.Fbase)} units</dd><dt>Planner adjustment</dt><dd>${r.adj>0?'+':''}${r.adj}%</dd><dt>Forecast used</dt><dd>${f(r.F)} units</dd></dl>`],
+   [`Inventory analysis`,`<div class="formula">Inventory position = Current inventory + Incoming − Backorders</div><div class="formula">${f(r.stock)} + ${f(r.incoming)} − ${f(r.backorder)} = ${f(r.IP)} units</div>`],
+   [`Safety stock`,`<div class="formula">Safety stock ≈ z × σD × √L</div><div class="formula">${r.z.toFixed(3)} × ${f(r.sigma)} × √${r.Lw.toFixed(2)} = ${f(r.SS)} units</div><p class="mut">z is the ${state.policy.service}% service-level factor. σD is the standard deviation of the last 12 weeks of weekly sales. L is lead time in weeks (${r.L} days ÷ 7).</p>`],
+   [`Reorder point`,`<div class="formula">Reorder point = Lead-time demand + Safety stock</div><div class="formula">${f(r.F)} × ${r.Lw.toFixed(2)} + ${f(r.SS)} = ${f(r.LTD)} + ${f(r.SS)} = ${f(r.ROP)} units</div><p class="mut">Inventory position (${f(r.IP)}) is ${r.IP<=r.ROP?'at or below':'above'} the reorder point.</p>`],
+   [`Stock risk`,`<p>Status rules in this dashboard:</p><ul class="clean"><li><b>Urgent</b>: inventory position ≤ reorder point and below ${state.policy.urgentPct}% of it.</li><li><b>Reorder</b>: inventory position ≤ reorder point.</li><li><b>Overstock risk</b>: inventory position above ${state.policy.overstockMult}× target inventory.</li><li><b>Healthy</b>: everything else.</li></ul><p class="mut">The ${state.policy.urgentPct}% and ${state.policy.overstockMult}× thresholds are dashboard assumptions you can change under Policy.</p>
+     <dl class="kv"><dt>Inventory position ÷ reorder point</dt><dd>${r.ROP?pct(r.IP/r.ROP):'—'}</dd><dt>Days of cover on hand</dt><dd>${isFinite(r.coverDays)?fmt1(r.coverDays):'—'}</dd><dt>Lead time</dt><dd>${r.L} days</dd></dl>`],
+   [`Recommended order`,`<div class="formula">Target inventory = Forecast + Safety stock = ${f(r.F)} + ${f(r.SS)} = ${f(r.target)}</div><div class="formula">Recommended order ≈ Target − Inventory position = ${f(r.target)} − ${f(r.IP)} = ${f(r.raw)}</div><p class="mut">An order is recommended only when inventory position is at or below the reorder point. Then MOQ (${f(r.moq)} units) and storage capacity${r.cap?` (${f(r.cap)} units)`:' (no limit set)'} are applied.</p><dl class="kv"><dt>Calculated</dt><dd>${f(r.raw)}</dd><dt>After constraints</dt><dd>${f(r.qty)} units</dd><dt>Constraint notes</dt><dd>${r.notes.length?r.notes.join(', '):'None'}</dd></dl>`],
+   [`Managerial decision`,`<p>The model forecasts and the replenishment layer recommends. A person decides. Approve the quantity, change it, or defer it. Approved orders appear in the order queue on the Overview.</p>`]];
+  const e=E[i];return `<h2>${e[0]}</h2>${e.slice(1).join('')}`;
+}
+function viewWorkbench(){
+  const r=state.byKey[state.sel];if(!r)return '<div class="card">No series available.</div>';
+  const s=r.s,ov=state.ov[r.key]||{};const last=s.rows[s.rows.length-1];
+  const d=state.decisions[r.key];
+  const stages=[
+   {k:'Historical data',v:fmt(r.lastSales),c:`sold in ${esc(last.week)} · 4-wk avg ${fmt(r.m4)}`},
+   {k:'Demand forecast',v:fmt(r.F),c:`next week · ${r.src==='imported'?'imported':'demo baseline'}`},
+   {k:'Inventory analysis',v:fmt(r.IP),c:`${fmt(r.stock)} + ${fmt(r.incoming)} − ${fmt(r.backorder)}`},
+   {k:'Safety stock',v:fmt(r.SS),c:`${state.policy.service}% service level`},
+   {k:'Reorder point',v:fmt(r.ROP),c:`lead-time demand ${fmt(r.LTD)} + SS`},
+   {k:'Stock risk',v:r.status,sm:true,cls:'risk-'+statusKey(r.status),c:isFinite(r.coverDays)?`${fmt1(r.coverDays)} days cover · ${r.L} d lead time`:'no forecast demand'},
+   {k:'Recommended order',v:fmt(r.qty),c:r.notes.length?r.notes.join(', '):`target ${fmt(r.target)} − position ${fmt(r.IP)}`},
+   {k:'Managerial decision',v:d?(d.status==='approved'?'Approved':'Deferred'):(r.qty>0?'Pending':'No order'),sm:true,c:d&&d.status==='approved'?fmt(d.qty)+' units queued':'your call'}];
+  const n=s.rows.length;const from=Math.max(0,n-26);
+  const xs=s.rows.slice(from).map(x=>x.week.replace(/^20/,'').replace('-W',' W')).concat([esc(weekNextLabel(s))]);
+  const sal=s.rows.slice(from).map(x=>x.sales).concat([null]);
+  const inv=s.rows.slice(from).map(x=>x.closing).concat([null]);
+  const fc=new Array(sal.length).fill(null);fc[sal.length-2]=s.rows[n-1].sales;fc[sal.length-1]=r.F;
+  const so=[];s.rows.slice(from).forEach((x,i)=>{if(x.so)so.push(i)});
+  const ch=chart({id:'c-wb',xs,label:'Weekly sales, closing inventory and next-week forecast',
+    lines:[{name:'Weekly sales',color:'var(--sales)',vals:sal,w:2.2,dots:so,dotR:4,dotFill:'var(--warn)'},{name:'Closing inventory',color:'var(--inv)',vals:inv,w:1.6,dash:'4 3'},{name:'Forecast (next week)',color:'var(--accent)',vals:fc,w:2.2,dash:'2 3',dots:[sal.length-1],dotR:6}],
+    legendExtra:'<span><i style="background:var(--warn);height:8px;width:8px;border-radius:50%"></i>Stockout week (sales may understate demand)</span>'});
+  const prods=[...new Map(state.series.map(x=>[x.pid,x.name])).entries()],locs=[...new Set(state.series.map(x=>x.loc))];
+  return `<div class="view-in">
+  <div class="card" style="margin-bottom:16px"><div class="toolbar" style="margin:0">
+    <label class="field">Product<select data-act="selprod">${prods.map(([id,nm])=>`<option value="${esc(id)}" ${s.pid===id?'selected':''}>${esc(nm)} (${esc(id)})</option>`).join('')}</select></label>
+    <label class="field">Location<select data-act="selloc">${locs.map(l=>`<option ${s.loc===l?'selected':''}>${esc(l)}</option>`).join('')}</select></label>
+    <span style="margin-left:auto">${pill(r.status)}</span></div></div>
+  ${ribbon(stages,state.stage,true)}
+  <div class="grid g-2">
+    <div class="card">${stageExplain(r,state.stage)}</div>
+    <div class="card"><h2>Scenario controls</h2><p class="lede">Change an input and the whole pipeline recalculates. These are planner inputs, not model outputs.</p>
+      <div class="grid g-2" style="gap:10px">
+       <label class="field">Lead time (days)<input type="number" min="1" max="30" step="1" data-act="ov" data-f="lt" value="${r.L}"></label>
+       <label class="field">Forecast adjustment: <b data-adjv>${r.adj>0?'+':''}${r.adj}%</b><input type="range" min="-30" max="30" step="5" data-act="ov" data-f="adj" value="${r.adj}"></label>
+       <label class="field">Minimum order quantity (MOQ)<input type="number" min="0" step="10" data-act="ov" data-f="moq" value="${r.moq}"></label>
+       <label class="field">Storage capacity (units, 0 = no limit)<input type="number" min="0" step="50" data-act="ov" data-f="cap" value="${r.cap||0}"></label>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" data-act="ov" data-f="promo" ${ov.promo?'checked':''} ${r.src==='imported'?'disabled':''}> Promotion planned for next week ${r.src==='imported'?'<span class="mut">(applies to the demo baseline only)</span>':''}</label>
+      <div style="margin-top:12px"><button class="btn" data-act="resetov">Reset scenario</button></div>
+    </div>
+    <div class="card"><h2>Stock position</h2><p class="lede">Where inventory stands against the reorder point and target, before and after the recommended order.</p>${gauge(r)}</div>
+    <div class="card"><h2>Decision</h2><p class="lede">Recommended order: <b>${fmt(r.qty)} units</b>${r.qty>0?'':'. No order is needed under the current policy.'}</p>
+      ${r.qty>0?`<label class="field" style="max-width:200px">Quantity to order<input type="number" min="0" step="10" id="dec-qty" value="${d?d.qty:r.qty}"></label>
+      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary" data-act="approve" data-key="${r.key}" data-from="qty">Approve order</button><button class="btn" data-act="defer" data-key="${r.key}">Defer</button>${d?`<button class="btn" data-act="undec" data-key="${r.key}">Clear decision</button>`:''}</div>`:''}
+      <dl class="kv" style="margin-top:14px"><dt>Supplier</dt><dd>${esc(s.sup)}</dd><dt>Forecast week</dt><dd>${esc(weekNextLabel(s))}</dd><dt>Forecast source</dt><dd>${r.src==='imported'?'Imported CSV':'Demo baseline'}</dd></dl></div>
+  </div>
+  <div class="card" style="margin-top:16px"><h2>Last 26 weeks and next-week forecast</h2><p class="lede">Hover the chart for values. Red dots mark weeks where stock ran out.</p>${ch}</div></div>`;
+}
+function weekNextLabel(s){const d=nextWeekDate(s);return d?isoWeekLabel(d):'next week'}
+
+/* ---------- VIEW: forecast lab ---------- */
+function viewLab(){
+  const r=state.byKey[state.sel];const s=r.s;const m=state.model,ev=state.eval,n=m.bounds.n;
+  const pred=oneStepPredictions(s,m);
+  const xs=s.rows.map(x=>x.week.replace(/^20/,'').replace('-W',' W')).concat([weekNextLabel(s)]);
+  const act=s.rows.map(x=>x.sales).concat([null]);
+  const pv=pred.concat([r.Fbase]);
+  const so=[];s.rows.forEach((x,i)=>{if(x.so)so.push(i)});
+  const ch=chart({id:'c-lab',xs,h:300,label:'Actual weekly sales and demonstration baseline predictions',
+    bands:[{i0:0,i1:m.bounds.tr,color:'#6b7a8d',label:'Training'},{i0:m.bounds.tr,i1:m.bounds.va,color:'#C98A0A',label:'Validation',op:.12},{i0:m.bounds.va,i1:n,color:'#2446D8',label:'Test',op:.1}],
+    lines:[{name:'Actual sales',color:'var(--sales)',vals:act,w:1.8,dots:so,dotR:3.5,dotFill:'var(--warn)'},{name:'Demo baseline, one week ahead',color:'var(--accent)',vals:pv,w:1.8,dots:[n],dotR:5}],
+    legendExtra:'<span><i style="background:var(--warn);height:8px;width:8px;border-radius:50%"></i>Stockout week</span>'});
+  const sm=seriesMetricsTest(s,m);
+  const row=(name,x,tag)=>`<tr><td class="l"><b>${name}</b> ${tag||''}</td><td>${fmt1(x.mae)}</td><td>${fmt1(x.rmse)}</td><td>${pct(x.wape)}</td><td>${fmt1(x.bias)} <span class="mut">(${pct(x.biasPct)})</span></td></tr>`;
+  const best=['naive','ma4','ridge'].reduce((a,k)=>ev[k].wape<ev[a].wape?k:a,'ridge');
+  const coefs=FEATURE_NAMES.map((nm,i)=>({nm,b:m.betaFinal[i]}));const mx=Math.max(...coefs.slice(1).map(c=>Math.abs(c.b)))||1;
+  const imp=state.importedInfo;
+  return `<div class="view-in">
+  <div class="note warn"><b>Production model versus this page.</b> The project's primary model is the <b>XGBoost Regressor</b>, trained in the Python pipeline. It is <b>not running in this browser</b>. The forecasts below come from a <b>demonstration baseline</b>: ridge linear regression on the same style of lag and rolling features, trained here on ${esc(state.data.label.toLowerCase())}. Its accuracy says nothing about XGBoost or about real demand.</div>
+  <div class="grid g-main" style="margin-top:16px">
+   <div class="card"><h2>${esc(s.name)} · ${esc(s.loc)}</h2><p class="lede">One-week-ahead predictions on every week after the first 12 (lags need history). Shaded regions show the chronological train, validation and test split. The final point is the forecast for ${esc(weekNextLabel(s))}.</p>
+     <div class="toolbar"><label class="field">Product<select data-act="selprod">${[...new Map(state.series.map(x=>[x.pid,x.name])).entries()].map(([id,nm])=>`<option value="${esc(id)}" ${s.pid===id?'selected':''}>${esc(nm)}</option>`).join('')}</select></label>
+     <label class="field">Location<select data-act="selloc">${[...new Set(state.series.map(x=>x.loc))].map(l=>`<option ${s.loc===l?'selected':''}>${esc(l)}</option>`).join('')}</select></label></div>
+     ${ch}
+     <h2 style="margin-top:18px">Test-period accuracy for this series</h2>
+     <div class="tw"><table><thead><tr><th class="l">Method</th><th>MAE</th><th>RMSE</th><th>WAPE</th><th>Bias (forecast − actual)</th></tr></thead><tbody>${sm.naive?row('Naive (last week)',sm.naive)+row('Moving average (4 weeks)',sm.ma4)+row('Demo baseline (ridge)',sm.ridge):'<tr><td class="l" colspan="5">Not enough test weeks.</td></tr>'}</tbody></table></div>
+   </div>
+   <div style="display:flex;flex-direction:column;gap:16px">
+     <div class="card"><h2>Forecast source</h2><p class="lede">Choose which forecasts feed the replenishment layer.</p>
+       <div class="chips"><button class="chip" data-act="src" data-v="baseline" aria-pressed="${state.source==='baseline'}">Demo baseline</button><button class="chip" data-act="src" data-v="imported" aria-pressed="${state.source==='imported'}" ${state.imported?'':'disabled'}>Imported CSV</button></div>
+       <p class="mut" style="margin:10px 0 6px">${imp?`Imported ${imp.matched} of ${state.series.length} series${imp.model?' from '+esc(imp.model):''}.${imp.unmatched?` ${imp.unmatched} rows did not match any series.`:''}`:'No forecast file imported yet.'}</p>
+       <label class="btn" style="display:inline-block">Import forecasts (CSV)<input type="file" accept=".csv,text/csv" data-act="impfc" class="sr"></label>
+       <details style="margin-top:12px"><summary style="cursor:pointer;font-weight:600">How to connect XGBoost</summary>
+         <p class="mut">Train and validate the XGBoost Regressor in your Python pipeline, then export one forecast per product-location for the next week. Columns: <i>Product_ID, Location_ID, Forecast_Qty</i> (optional <i>Model_Name</i>).</p>
+<pre class="code">out = latest[["Product_ID","Location_ID"]].copy()
+out["Forecast_Qty"] = model.predict(latest[FEATURES]).clip(min=0).round()
+out["Model_Name"] = "XGBRegressor"
+out.to_csv("xgboost_forecasts.csv", index=False)</pre>
+         <p class="mut">Build <i>latest</i> with the same leakage rules: only information available before the forecast week.</p></details></div>
+     <div class="card"><h2>Evaluation of the demo baseline</h2><p class="lede">Chronological test weeks only, across all ${state.series.length} series (${fmt(ev.n)} forecasts). Stockout weeks are excluded from scoring because observed sales understate demand.</p>
+       <div class="tw"><table><thead><tr><th class="l">Method</th><th>MAE</th><th>RMSE</th><th>WAPE</th><th>Bias</th></tr></thead><tbody>
+        ${row('Naive',ev.naive,best==='naive'?'<span class="tag">lowest WAPE</span>':'')}${row('Moving avg (4)',ev.ma4,best==='ma4'?'<span class="tag">lowest WAPE</span>':'')}${row('Demo ridge',ev.ridge,best==='ridge'?'<span class="tag">lowest WAPE</span>':'')}</tbody></table></div>
+       <p class="mut" style="margin-top:8px">Ridge penalty chosen on the validation weeks: ${m.lambda}. Metrics are computed live from ${esc(state.data.label.toLowerCase())}. They are not results for the production model.</p></div>
+     <div class="card"><h2>Baseline coefficients</h2><p class="lede">Weights of the demo ridge model on scale-free features. They are not XGBoost feature importance.</p>
+       ${coefs.slice(1).map(c=>`<div style="display:grid;grid-template-columns:150px 1fr 46px;gap:8px;align-items:center;font-size:12px;margin:3px 0"><span>${c.nm}</span><div class="bar"><span style="width:${Math.abs(c.b)/mx*100}%;background:${c.b>=0?'var(--accent)':'var(--urgent)'}"></span></div><span class="mut" style="text-align:right">${c.b.toFixed(2)}</span></div>`).join('')}</div>
+   </div></div></div>`;
+}
+
+/* ---------- VIEW: data ---------- */
+const DICT=[
+ ['Week','Time','2026-W39','Core','Present'],['Product_ID','Categorical','P001','Required','Present'],['Product_Category','Categorical','Beverages','Required','Present'],
+ ['Location_ID','Categorical','MUL-01','Spatial segmentation','Present'],['Sales_Qty','Numeric','650','Core demand signal','Present'],['Closing_Inventory','Numeric','350','Replenishment input','Present'],
+ ['Stockout_Flag','Binary','0 / 1','Detect censored demand','Present'],['Selling_Price','Numeric','500','Demand driver','Present'],['Promotion_Flag','Binary','0 / 1','Demand driver','Present'],
+ ['Supplier_ID','Categorical','S07','Replenishment','Present'],['Lead_Time_Days','Numeric','5','Replenishment','Present'],['Incoming_Inventory','Numeric','200','Inventory position','Present'],['Backorder_Qty','Numeric','50','Inventory position','Present'],
+ ['Lag_1, 2, 4, 8, 12','Engineered','Previous demand','Demand lags','Built in browser (Lag_52 needs more history)'],['Rolling_Mean_4 / 8, Rolling_STD_8','Engineered','Past-window stats','Volatility','Built in browser'],
+ ['Sales_Trend_4','Engineered','m4 − m12','Trend','Built in browser'],['Inventory_Coverage','Engineered','Inventory ÷ avg demand','Replenishment','Built in browser'],['Price_Change','Engineered','Price ÷ prior price − 1','Price','Built in browser'],
+ ['Season_sin / cos, Ramadan','Calendar','Week of year','Calendar / optional external','Built in browser']];
+function viewData(){
+  const s=state.byKey[state.sel].s;const n=s.rows.length;
+  const rows=s.rows.slice(-10).reverse().map(x=>`<tr><td class="l">${esc(x.week)}</td><td>${fmt(x.sales)}</td><td>${fmt(x.closing)}</td><td>${fmt(x.incoming)}</td><td>${fmt(x.backorder)}</td><td>${x.so}</td><td>${fmt(x.price)}</td><td>${x.promo}</td><td>${x.lt}</td></tr>`).join('');
+  const prods=[...new Map(state.series.map(x=>[x.pid,x.name])).entries()];
+  const soBars=prods.map(([id,nm])=>{const a=state.series.filter(x=>x.pid===id);const tot=sum(a.map(x=>x.rows.length));const c=sum(a.map(x=>sum(x.rows.map(y=>y.so))));return {nm,id,share:c/tot,c}}).sort((a,b)=>b.share-a.share);
+  const mxs=Math.max(...soBars.map(b=>b.share))||1;
+  const totRows=sum(state.series.map(x=>x.rows.length)),totSo=sum(state.series.map(x=>sum(x.rows.map(y=>y.so))));
+  const info=state.data.notes.map(t=>`<li>${esc(t)}</li>`).join('');
+  return `<div class="view-in"><div class="grid g-main">
+   <div class="card"><h2>Data source</h2>
+    <div class="note ${state.data.kind==='synthetic'?'warn':''}" style="margin-top:0"><b>${esc(state.data.label)}.</b> ${state.data.kind==='synthetic'?`Generated in this browser from a fixed random seed: 12 products × 4 locations × ${n} weeks = ${fmt(totRows)} rows, with seasonality, trend, promotions, Ramadan effects, stockouts and lead-time variation. Product names, prices and quantities are illustrative. This is not real company data.`:`Loaded from your file: ${state.series.length} series × ${n} weeks = ${fmt(totRows)} rows.`}</div>
+    ${info?`<ul class="clean mut">${info}</ul>`:''}
+    <p class="lede">Bring your own data in the project's panel structure (one row per product-location-week). Required columns: <i>Week, Product_ID, Location_ID, Sales_Qty, Closing_Inventory</i>. Use a date such as 2026-09-21 in <i>Week</i> to enable calendar features. Everything stays in your browser.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px"><label class="btn primary" style="display:inline-block">Load dataset (CSV)<input type="file" accept=".csv,text/csv" data-act="impdata" class="sr"></label><button class="btn" data-act="template">Get CSV template</button>${state.data.kind!=='synthetic'?'<button class="btn" data-act="resetdata">Back to synthetic demo data</button>':''}</div>
+    <h2 style="margin-top:22px">Last 10 weeks: ${esc(s.name)} · ${esc(s.loc)}</h2>
+    <div class="toolbar"><label class="field">Product<select data-act="selprod">${prods.map(([id,nm])=>`<option value="${esc(id)}" ${s.pid===id?'selected':''}>${esc(nm)}</option>`).join('')}</select></label>
+    <label class="field">Location<select data-act="selloc">${[...new Set(state.series.map(x=>x.loc))].map(l=>`<option ${s.loc===l?'selected':''}>${esc(l)}</option>`).join('')}</select></label></div>
+    <div class="tw"><table><thead><tr><th class="l">Week</th><th>Sales_Qty</th><th>Closing_Inv.</th><th>Incoming</th><th>Backorder</th><th>Stockout</th><th>Price</th><th>Promo</th><th>Lead time</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <h2 style="margin-top:22px">Data dictionary</h2><p class="lede">Raw business fields and engineered features, as specified in the project.</p>
+    <div class="tw"><table><thead><tr><th class="l">Attribute</th><th class="l">Type</th><th class="l">Example</th><th class="l">Role</th><th class="l">In this dashboard</th></tr></thead><tbody>${DICT.map(d=>`<tr><td class="l"><b>${d[0]}</b></td><td class="l">${d[1]}</td><td class="l mut">${d[2]}</td><td class="l">${d[3]}</td><td class="l">${d[4]}</td></tr>`).join('')}</tbody></table></div>
+   </div>
+   <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card"><h2>Censored demand</h2><p class="lede">Zero or reduced sales during a stockout may not reflect customer demand. ${fmt(totSo)} of ${fmt(totRows)} weeks (${pct(totSo/totRows)}) are flagged.</p>
+     ${soBars.map(b=>`<div style="display:grid;grid-template-columns:130px 1fr 44px;gap:8px;align-items:center;font-size:12px;margin:4px 0"><span>${esc(b.nm)}</span><div class="bar"><span style="width:${b.share/mxs*100}%;background:var(--urgent)"></span></div><span class="mut" style="text-align:right">${pct(b.share)}</span></div>`).join('')}
+     <p class="mut" style="margin-top:10px">Handling: stockout weeks are excluded from training targets${state.policy.excludeCensored?'':' (currently switched off)'} and from test scoring. Change this under Policy.</p></div>
+    <div class="card"><h2>Leakage controls in this page</h2><ul class="clean">
+      <li>Every feature uses only weeks up to the forecast origin.</li><li>Rolling statistics cover the origin week and earlier, never the target week.</li>
+      <li>Train, validation and test are chronological (${state.model.bounds.tr} / ${state.model.bounds.va-state.model.bounds.tr} / ${n-state.model.bounds.va} target weeks). No random split.</li>
+      <li>Promotion and calendar flags for the target week are treated as known in advance (planned).</li><li>Zero sales in a stockout week is not read as zero demand.</li></ul></div>
+   </div></div></div>`;
+}
+
+/* ---------- VIEW: policy ---------- */
+function viewPolicy(){
+  const p=state.policy;
+  return `<div class="view-in"><div class="grid g-2">
+   <div class="card"><h2>Replenishment policy</h2><p class="lede">Safety stock, reorder point, inventory position and order quantity follow the project specification. Status thresholds are not specified there, so they are set here.</p>
+    <div class="grid" style="gap:14px">
+     <label class="field">Service level <span class="tag pdf">Project formula: z × σD × √L</span><select data-act="pol" data-f="service">${Object.keys(Z_TABLE).map(k=>`<option value="${k}" ${p.service===k?'selected':''}>${k}% (z = ${Z_TABLE[k]})</option>`).join('')}</select></label>
+     <label class="field">Urgent threshold: inventory position below this % of reorder point <span class="tag assume">Dashboard assumption</span><input type="number" min="5" max="100" step="5" data-act="pol" data-f="urgentPct" value="${p.urgentPct}"></label>
+     <label class="field">Overstock threshold: inventory position above this multiple of target inventory <span class="tag assume">Dashboard assumption</span><input type="number" min="1" max="6" step=".25" data-act="pol" data-f="overstockMult" value="${p.overstockMult}"></label>
+    </div></div>
+   <div class="card"><h2>Forecasting settings</h2><p class="lede">Applies to the demonstration baseline.</p>
+    <label style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" data-act="pol" data-f="excludeCensored" ${p.excludeCensored?'checked':''}><span>Exclude stockout weeks from training targets<br><span class="mut">Observed sales in a stockout week understate demand. Changing this retrains the baseline.</span></span></label>
+    <h2 style="margin-top:20px">Fixed by the specification</h2>
+    <ul class="clean"><li>Forecast horizon: next week, by product and location.</li><li>Lead-time demand = forecast × lead time ÷ 7.</li><li>Reorder point = lead-time demand + safety stock.</li><li>Target inventory = forecast + safety stock.</li><li>Inventory position = current + incoming − backorders.</li><li>Recommended order ≈ target − inventory position, then MOQ and capacity.</li></ul>
+    <div style="margin-top:10px"><button class="btn" data-act="resetpol">Restore defaults</button></div></div></div></div>`;
+}
+
+/* ---------- VIEW: method ---------- */
+function viewMethod(){
+  const m=state.model,n=m.bounds.n;const W=700;const X=v=>10+v/n*(W-20);
+  const tl=`<svg class="chart" viewBox="0 0 ${W} 70" style="min-width:520px" role="img" aria-label="Chronological split timeline"><rect x="${X(0)}" y="14" width="${X(m.bounds.tr)-X(0)}" height="26" fill="#6b7a8d" opacity=".35"/><rect x="${X(m.bounds.tr)}" y="14" width="${X(m.bounds.va)-X(m.bounds.tr)}" height="26" fill="#C98A0A" opacity=".5"/><rect x="${X(m.bounds.va)}" y="14" width="${X(n)-X(m.bounds.va)}" height="26" fill="#2446D8" opacity=".5"/>
+   <text x="${X(0)+6}" y="31" style="fill:var(--ink)">Training: weeks 1–${m.bounds.tr}</text><text x="${X(m.bounds.tr)+6}" y="31" style="fill:var(--ink)">Validation</text><text x="${X(m.bounds.va)+6}" y="31" style="fill:var(--ink)">Test: newest</text><text x="10" y="60">Past</text><text x="${W-10}" y="60" text-anchor="end">Future</text></svg>`;
+  return `<div class="view-in"><div class="grid g-2">
+   <div class="card"><h2>Production architecture versus this browser demo</h2>
+    <div class="tw"><table><thead><tr><th class="l">Component</th><th class="l">Production design (project)</th><th class="l">This dashboard</th></tr></thead><tbody>
+     <tr><td class="l"><b>Primary model</b></td><td class="l">XGBoost Regressor</td><td class="l">Not run. Demo baseline: ridge regression</td></tr>
+     <tr><td class="l"><b>Comparisons</b></td><td class="l">Naive, moving average, linear regression, random forest, LightGBM</td><td class="l">Naive, moving average, ridge (live)</td></tr>
+     <tr><td class="l"><b>Training</b></td><td class="l">Python pipeline</td><td class="l">In your browser, on page load</td></tr>
+     <tr><td class="l"><b>Data</b></td><td class="l">Anonymized company data, public data, or documented synthetic data</td><td class="l">${esc(state.data.label)}</td></tr>
+     <tr><td class="l"><b>Connect XGBoost</b></td><td class="l">Export next-week forecasts</td><td class="l">Import on the Forecast lab page</td></tr>
+     <tr><td class="l"><b>Replenishment layer</b></td><td class="l">Safety stock, reorder point, order quantity</td><td class="l">Implemented as specified</td></tr></tbody></table></div>
+    <div class="note">XGBoost forecasts demand. A separate replenishment layer decides the order. This page keeps that separation: the forecast source is always shown, and the replenishment layer works the same on a baseline forecast or an imported one.</div>
+    <h2 style="margin-top:18px">Time-based validation</h2><p class="lede">Forecasting must learn from the past and predict the future. The split is chronological, with no random shuffling.</p>${tl}</div>
+   <div class="card"><h2>Replenishment formulas</h2>
+    <div class="formula">Inventory position = Current + Incoming − Backorders</div>
+    <div class="formula">Safety stock ≈ z × σD × √L</div>
+    <div class="formula">Reorder point = Lead-time demand + Safety stock</div>
+    <div class="formula">Target inventory = Forecast + Safety stock</div>
+    <div class="formula">Recommended order ≈ Target − Inventory position</div>
+    <p class="mut">Worked example from the specification: forecast 700, safety stock 150, stock 300, incoming 100, backorders 0 gives target 850, position 400 and an order of 450 units.</p>
+    <h2 style="margin-top:18px">Not implemented here</h2><ul class="clean"><li>XGBoost, LightGBM and random forest training.</li><li>SHAP explanations, prediction intervals and probabilistic forecasts.</li><li>Lag_52 (needs more than two years of weekly history).</li><li>Holding-cost and service-level business metrics against real outcomes.</li></ul>
+    <h2 style="margin-top:18px">Key ideas</h2><ul class="clean"><li><b>Why weekly?</b> It balances daily noise and monthly coarseness.</li><li><b>Why stockout flags?</b> Zero sales during a stockout is not zero demand.</li><li><b>Does the model decide how much to order?</b> No. The replenishment layer does.</li></ul></div>
+  </div></div>`;
+}
+
+/* ---------- render + events ---------- */
+const VIEWS={overview:['Replenishment overview','From weekly history to a reorder decision, for every product and location.',viewOverview],
+  workbench:['Decision workbench','Follow one product-location through the pipeline and test what-if scenarios.',viewWorkbench],
+  lab:['Forecast lab','Next-week demand forecasts, chronological validation and forecast sources.',viewLab],
+  data:['Data','The weekly panel dataset, its dictionary and censored-demand checks.',viewData],
+  policy:['Policy','Service level and status thresholds used by the replenishment layer.',viewPolicy],
+  method:['Method','The project architecture, formulas and what this page does and does not run.',viewMethod]};
+const ICON={overview:'<path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/>',workbench:'<path d="M4 6h16M4 12h10M4 18h6"/>',lab:'<path d="M3 17l5-6 4 4 8-9"/>',data:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',policy:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',method:'<path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5"/>'};
+function render(){
+  const [t,sub,fn]=VIEWS[state.view];
+  const scroller=document.scrollingElement||document.documentElement;const y=scroller.scrollTop;
+  $('#nav').innerHTML=Object.entries(VIEWS).map(([k,v])=>`<button data-act="nav" data-v="${k}" ${k===state.view?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>${v[0].split(' ').slice(-1)[0]==='overview'?'Overview':v[0]}</button>`).join('');
+  $('#title').textContent=t;$('#subtitle').textContent=sub;
+  $('#badges').innerHTML=`<span class="badge ${state.data.kind==='synthetic'?'demo':''}">Data <b>${state.data.kind==='synthetic'?'Synthetic demo':'Your file'}</b></span><span class="badge ${state.source==='baseline'?'demo':''}">Forecast <b>${state.source==='imported'?'Imported CSV':'Demo baseline'}</b></span><span class="badge">Production model <b>XGBoost (not in browser)</b></span>`;
+  $('#view').innerHTML=fn();scroller.scrollTop=y;
+}
+function setOv(key,f,v){state.ov[key]=Object.assign({},state.ov[key]);state.ov[key][f]=v}
+function approve(key,qty){state.decisions[key]={status:'approved',qty:Math.max(0,Math.round(qty))};toast('Order approved')}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
+  if(a==='nav'){state.view=b.dataset.v;render();window.scrollTo(0,0)}
+  else if(a==='open'){state.sel=b.dataset.key;state.view='workbench';state.stage=1;render();window.scrollTo(0,0)}
+  else if(a==='stage'){state.stage=+b.dataset.i;render()}
+  else if(a==='statusf'){state.filt.status=b.dataset.v;render()}
+  else if(a==='approve'){const r=state.byKey[b.dataset.key];const inp=b.dataset.from==='qty'?+$('#dec-qty').value:r.qty;approve(b.dataset.key,inp);render()}
+  else if(a==='defer'){state.decisions[b.dataset.key]={status:'deferred',qty:0};toast('Order deferred');render()}
+  else if(a==='undec'){delete state.decisions[b.dataset.key];render()}
+  else if(a==='approveall'){let c=0;state.res.forEach(r=>{if((r.status==='Urgent'||r.status==='Reorder')&&r.qty>0&&!state.decisions[r.key]){state.decisions[r.key]={status:'approved',qty:r.qty};c++}});toast(c+' orders approved');render()}
+  else if(a==='exportq'){const q=state.res.filter(r=>state.decisions[r.key]&&state.decisions[r.key].status==='approved');
+    const h='Product_ID,Product,Location_ID,Supplier_ID,Forecast_Qty,Inventory_Position,Safety_Stock,Reorder_Point,Recommended_Qty,Approved_Qty\n';
+    exportText('order_queue.csv',h+q.map(r=>[r.s.pid,'"'+r.s.name.replace(/"/g,'""')+'"',r.s.loc,r.s.sup,Math.round(r.F),Math.round(r.IP),Math.round(r.SS),Math.round(r.ROP),r.qty,state.decisions[r.key].qty].join(',')).join('\n'))}
+  else if(a==='resetov'){delete state.ov[state.sel];compute(false);render()}
+  else if(a==='src'){state.source=b.dataset.v;compute(false);render()}
+  else if(a==='resetpol'){state.policy=Object.assign({},DEFAULT_POLICY,{urgentPct:65});compute(true);render()}
+  else if(a==='template'){const s=state.series[0];const h='Week,Product_ID,Product_Name,Product_Category,Location_ID,Supplier_ID,Sales_Qty,Closing_Inventory,Incoming_Inventory,Backorder_Qty,Stockout_Flag,Selling_Price,Promotion_Flag,Lead_Time_Days\n';
+    exportText('demand_panel_template.csv',h+s.rows.slice(-6).map(x=>[x.date?x.date.toISOString().slice(0,10):x.week,s.pid,'"'+s.name+'"',s.cat,s.loc,s.sup,x.sales,x.closing,x.incoming,x.backorder,x.so,x.price,x.promo,x.lt].join(',')).join('\n')+'\n# Replace these sample rows with at least 30 weeks per Product_ID and Location_ID, then delete this line.')}
+  else if(a==='resetdata'){loadSeries(generateSyntheticData(20260928),{kind:'synthetic',label:'Synthetic demonstration data',notes:[]});toast('Synthetic demo data restored')}
+  else if(a==='closemodal'){$('#overlay').classList.remove('on')}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;const a=t.dataset&&t.dataset.act;if(!a)return;
+  if(a==='floc'){state.filt.loc=t.value;render()}else if(a==='fcat'){state.filt.cat=t.value;render()}
+  else if(a==='selprod'||a==='selloc'){const cur=state.byKey[state.sel].s;const pid=a==='selprod'?t.value:cur.pid;const loc=a==='selloc'?t.value:cur.loc;
+    const k=pid+'|'+loc;if(state.byKey[k])state.sel=k;else{const alt=state.series.find(x=>x.pid===pid);if(alt)state.sel=alt.key}render()}
+  else if(a==='ov'){const f=t.dataset.f;let v=t.type==='checkbox'?t.checked:parseFloat(t.value);if(t.type!=='checkbox'&&isNaN(v))v=0;setOv(state.sel,f,v);compute(false);render()}
+  else if(a==='pol'){const f=t.dataset.f;if(t.type==='checkbox')state.policy[f]=t.checked;else if(f==='service')state.policy.service=t.value;else state.policy[f]=parseFloat(t.value)||state.policy[f];compute(f==='excludeCensored');render()}
+  else if(a==='impfc'||a==='impdata'){const file=t.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{a==='impfc'?importForecasts(rd.result):importDataset(rd.result,file.name)}catch(err){toast(err.message)}};rd.readAsText(file);t.value=''}
+});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.act==='fq'){state.filt.q=t.value;const pos=t.selectionStart;render();const i=document.querySelector('[data-act="fq"]');if(i){i.focus();i.setSelectionRange(pos,pos)}}
+  if(t.dataset&&t.dataset.act==='ov'&&t.type==='range'){const el=document.querySelector('[data-adjv]');if(el)el.textContent=(t.value>0?'+':'')+t.value+'%'}});
+function importForecasts(text){
+  const t=parseCSV(text);const h=t[0].map(normKey);const ip=h.indexOf('productid'),il=h.indexOf('locationid'),iq=h.indexOf('forecastqty'),im=h.indexOf('modelname');
+  if(ip<0||il<0||iq<0)throw new Error('Forecast CSV needs Product_ID, Location_ID and Forecast_Qty columns.');
+  const map=new Map();let un=0,model='';
+  for(const r of t.slice(1)){const k=r[ip].trim()+'|'+r[il].trim();const v=parseFloat(r[iq]);if(!state.series.some(s=>s.key===k)||isNaN(v)){un++;continue}map.set(k,Math.max(0,v));if(im>=0&&r[im])model=r[im].trim()}
+  if(!map.size)throw new Error('No rows matched the dashboard\'s product-location series.');
+  state.imported=map;state.importedInfo={matched:map.size,unmatched:un,model};state.source='imported';compute(false);render();toast(`Imported ${map.size} forecasts`);
+}
+function loadSeries(series,meta){
+  state.series=series;state.data=meta;state.ov={};state.decisions={};state.imported=null;state.importedInfo=null;state.source='baseline';state.sel=null;state.filt={loc:'all',cat:'all',q:'',status:'all'};
+  compute(true);render();
+}
+function importDataset(text,name){
+  const r=seriesFromCSV(text);
+  loadSeries(r.series,{kind:'upload',label:'Your uploaded dataset ('+name+')',notes:r.notes.concat(r.dropped?[r.dropped+' series with fewer than 30 weeks were skipped.']:[])});
+  state.view='data';render();toast('Dataset loaded: '+r.series.length+' series');
+}
+document.getElementById('theme').addEventListener('click',()=>{const root=document.documentElement;const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;root.dataset.theme=dark?'light':'dark'});
+loadSeries(generateSyntheticData(20260928),{kind:'synthetic',label:'Synthetic demonstration data',notes:[]});
+
+</script></body></html>
