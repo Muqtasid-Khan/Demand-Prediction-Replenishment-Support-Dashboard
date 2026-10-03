@@ -2,194 +2,315 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Demand Prediction & Replenishment Support Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Demand Prediction & Replenishment Support</title>
 <style>
-:root{
-  --bg:#f4f7fb; --panel:#ffffff; --navy:#10233f; --blue:#2563eb; --cyan:#0891b2;
-  --green:#16a34a; --amber:#d97706; --red:#dc2626; --muted:#64748b; --line:#e2e8f0;
-  --shadow:0 8px 28px rgba(15,35,63,.07);
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);font-family:Inter,Segoe UI,Arial,sans-serif;color:#172033}
-.app{display:flex;min-height:100vh}
-.sidebar{width:245px;background:var(--navy);color:#dbe7f5;padding:25px 18px;position:fixed;inset:0 auto 0 0}
-.brand{display:flex;gap:11px;align-items:center;padding:4px 8px 28px}
-.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:grid;place-items:center;font-weight:800;color:white}
-.brand b{font-size:15px}.brand span{display:block;color:#91a5bf;font-size:11px;margin-top:3px}
-.nav{margin-top:10px}.nav a{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:9px;color:#afc0d5;text-decoration:none;font-size:13px;margin:5px 0}
-.nav a.active,.nav a:hover{background:rgba(255,255,255,.09);color:#fff}
-.side-note{position:absolute;left:18px;right:18px;bottom:24px;padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:10px;font-size:11px;color:#9fb0c6;line-height:1.5}
-.main{margin-left:245px;width:calc(100% - 245px);padding:25px 30px 40px}
-.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:23px}
-h1{margin:0;color:#10233f;font-size:25px;letter-spacing:-.4px}
-.subtitle{color:var(--muted);font-size:12px;margin-top:6px}
-.actions{display:flex;gap:9px;align-items:center}
-select,button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 12px;font-size:12px;color:#334155;cursor:pointer}
-button.primary{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:600}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
-.kpi{padding:17px 18px;position:relative;overflow:hidden}
-.kpi:after{content:"";position:absolute;width:60px;height:60px;border-radius:50%;right:-22px;top:-22px;background:#eff6ff}
-.kpi-label{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.kpi-value{font-size:24px;font-weight:750;color:#10233f;margin:7px 0 5px}
-.kpi-foot{font-size:11px;color:var(--muted)} .up{color:var(--green);font-weight:600}.warn{color:var(--amber);font-weight:600}.down{color:var(--red);font-weight:600}
-.grid{display:grid;grid-template-columns:1.7fr 1fr;gap:16px;margin-top:16px}
-.panel{padding:18px}.panel-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:13px}
-.panel-title{font-size:14px;font-weight:700;color:#172b49}.panel-sub{font-size:11px;color:var(--muted);margin-top:4px}
-.legend{display:flex;gap:15px;font-size:10px;color:var(--muted)}.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
-.chart-wrap{height:235px}.chart-wrap svg{width:100%;height:100%}
-.metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.mini{border:1px solid var(--line);border-radius:9px;padding:12px}.mini b{font-size:18px;color:#10233f}.mini span{display:block;font-size:10px;color:var(--muted);margin-top:4px}
-.bar{height:8px;background:#edf2f7;border-radius:99px;overflow:hidden;margin-top:8px}.fill{height:100%;border-radius:99px}
-.status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}.status{padding:12px;border-radius:9px;background:#f8fafc;border:1px solid var(--line);text-align:center}.status b{font-size:19px}.status span{display:block;font-size:10px;color:var(--muted);margin-top:4px}
-.table-panel{margin-top:16px;padding:18px}.table-controls{display:flex;gap:8px;flex-wrap:wrap}.table-controls input{border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12px;min-width:210px}
-.table-wrap{overflow:auto;margin-top:14px}table{width:100%;border-collapse:collapse;min-width:950px}th{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:#64748b;text-align:left;background:#f8fafc;padding:11px 10px;border-bottom:1px solid var(--line)}td{font-size:12px;padding:12px 10px;border-bottom:1px solid #eef2f6;color:#334155}tr:hover td{background:#fbfdff}
-.badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:10px;font-weight:700}.green{background:#dcfce7;color:#166534}.amber{background:#fef3c7;color:#92400e}.red{background:#fee2e2;color:#991b1b}
-.order{font-weight:750;color:#1d4ed8}.product{font-weight:700;color:#172b49}
-.footer{font-size:10px;color:#7b8aa0;margin-top:18px;text-align:right}
-@media(max-width:1050px){.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}}
-@media(max-width:750px){.sidebar{display:none}.main{margin-left:0;width:100%;padding:18px}.kpis{grid-template-columns:1fr 1fr}.top{gap:12px;flex-direction:column}.status-grid{grid-template-columns:1fr}}
+:root{--navy:#10233f;--blue:#2563eb;--cyan:#0891b2;--green:#16a34a;--amber:#d97706;--red:#dc2626;--bg:#f4f7fb;--card:#fff;--line:#e2e8f0;--muted:#64748b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#172033;font:14px Inter,Segoe UI,Arial,sans-serif}.app{min-height:100vh;display:flex}.side{width:245px;position:fixed;inset:0 auto 0 0;background:var(--navy);color:#dbe7f5;padding:24px 17px}.brand{display:flex;gap:10px;align-items:center;margin-bottom:25px}.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:grid;place-items:center;color:#fff;font-weight:800}.brand b{font-size:14px}.brand small{display:block;color:#91a5bf;margin-top:3px}.nav a{display:block;color:#b8c7d9;text-decoration:none;padding:11px 12px;border-radius:8px;margin:4px 0;font-size:13px}.nav a.active,.nav a:hover{background:#ffffff14;color:#fff}.note{position:absolute;bottom:20px;left:17px;right:17px;border:1px solid #ffffff18;border-radius:9px;padding:12px;color:#9fb0c6;font-size:11px;line-height:1.5}.main{margin-left:245px;width:calc(100% - 245px);padding:25px 30px 40px}.top{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:20px}h1{margin:0;color:var(--navy);font-size:24px}.sub{color:var(--muted);font-size:12px;margin-top:5px}.actions{display:flex;gap:8px;flex-wrap:wrap}button,select,input{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 11px;color:#334155}button{cursor:pointer}button.primary{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:700}button:hover{filter:brightness(.97)}input[type=file]{max-width:230px}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 7px 24px #10233f0b}.notice{padding:12px 15px;margin-bottom:15px;font-size:12px;display:none}.notice.show{display:block}.notice.info{border-left:4px solid var(--blue)}.notice.success{border-left:4px solid var(--green)}.notice.error{border-left:4px solid var(--red)}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:13px}.kpi{padding:16px}.label{text-transform:uppercase;letter-spacing:.45px;font-size:10px;color:var(--muted);font-weight:700}.value{font-size:23px;font-weight:800;color:var(--navy);margin:7px 0}.foot{font-size:10px;color:var(--muted)}.green{color:var(--green)}.amber{color:var(--amber)}.red{color:var(--red)}.grid{display:grid;grid-template-columns:1.7fr 1fr;gap:15px;margin-top:15px}.panel{padding:17px}.head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:12px}.title{font-weight:750;color:#172b49;font-size:14px}.desc{font-size:10px;color:var(--muted);margin-top:4px}.legend{font-size:10px;color:var(--muted)}.chart{height:245px}.chart svg{width:100%;height:100%}.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{padding:12px;border:1px solid var(--line);border-radius:9px}.metric b{font-size:18px;color:var(--navy)}.metric span{display:block;color:var(--muted);font-size:10px;margin-top:3px}.bar{height:8px;background:#edf2f7;border-radius:99px;overflow:hidden}.fill{height:100%;border-radius:99px}.status{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.status div{text-align:center;border:1px solid var(--line);border-radius:9px;padding:12px;background:#fafcff}.status b{font-size:20px}.status span{display:block;font-size:10px;color:var(--muted);margin-top:4px}.table-card{margin-top:15px;padding:17px}.controls{display:flex;gap:8px;flex-wrap:wrap}.controls input{min-width:210px}.table-wrap{overflow:auto;margin-top:13px}table{border-collapse:collapse;width:100%;min-width:1000px}th{background:#f8fafc;color:#64748b;text-transform:uppercase;letter-spacing:.35px;font-size:9px;padding:10px;text-align:left;border-bottom:1px solid var(--line)}td{padding:11px 10px;font-size:11px;border-bottom:1px solid #eef2f6;color:#334155}tbody tr:hover td{background:#fbfdff}.product{font-weight:750;color:#172b49}.badge{display:inline-block;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:750}.b-green{background:#dcfce7;color:#166534}.b-amber{background:#fef3c7;color:#92400e}.b-red{background:#fee2e2;color:#991b1b}.order{font-weight:800;color:#1d4ed8}.empty{padding:30px;text-align:center;color:var(--muted)}.footer{text-align:right;color:#7b8aa0;font-size:10px;margin-top:15px}.small{font-size:10px;color:var(--muted)}.nav a{transition:background .2s ease,transform .2s ease,color .2s ease}.nav a:hover{transform:translateX(3px)}
+button,select,input{transition:border-color .2s ease,box-shadow .2s ease,transform .15s ease,background .2s ease}
+button:hover{transform:translateY(-1px);box-shadow:0 5px 15px #10233f12}
+button:active{transform:translateY(0);box-shadow:none}
+button:focus,select:focus,input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px #2563eb18}
+.card{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.kpi{cursor:pointer}.kpi:hover{transform:translateY(-3px);box-shadow:0 12px 30px #10233f16;border-color:#cbd8ea}
+.metric{transition:transform .2s ease,background .2s ease}.metric:hover{transform:translateY(-2px);background:#f8fbff}
+.status div{transition:transform .2s ease,box-shadow .2s ease}.status div:hover{transform:translateY(-3px);box-shadow:0 7px 18px #10233f0d}
+tbody tr{cursor:pointer;transition:background .15s ease,transform .15s ease}tbody tr:hover td{background:#eef6ff}
+tbody tr.selected td{background:#dbeafe}
+.table-wrap::-webkit-scrollbar{height:8px}.table-wrap::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:99px}
+.tooltip{position:fixed;z-index:50;pointer-events:none;background:#10233f;color:#fff;padding:8px 10px;border-radius:7px;font-size:10px;box-shadow:0 8px 20px #10233f33;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;max-width:230px}.tooltip.show{opacity:1;transform:translateY(0)}
+.modal{position:fixed;inset:0;background:#10233f66;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}.modal.show{display:flex}.modal-box{width:min(650px,100%);background:#fff;border-radius:14px;box-shadow:0 25px 70px #10233f35;padding:22px;animation:pop .18s ease}.modal-head{display:flex;justify-content:space-between;align-items:flex-start}.close{border:0;background:#f1f5f9;width:32px;height:32px;border-radius:50%;padding:0}.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:17px}.detail{border:1px solid #e2e8f0;border-radius:9px;padding:11px}.detail span{display:block;color:#64748b;font-size:9px;text-transform:uppercase;margin-bottom:5px}.detail b{font-size:15px;color:#10233f}@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@media(max-width:1050px){.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}}@media(max-width:750px){.side{display:none}.main{margin:0;width:100%;padding:18px}.kpis{grid-template-columns:1fr 1fr}.top{flex-direction:column}.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="app">
-<aside class="sidebar">
-  <div class="brand"><div class="logo">DR</div><div><b>Demand & Replenishment</b><span>Decision Support System</span></div></div>
-  <nav class="nav">
-    <a class="active" href="#">▦ <span>Executive Overview</span></a>
-    <a href="#">⌁ <span>Demand Forecast</span></a>
-    <a href="#">◫ <span>Inventory Health</span></a>
-    <a href="#">↻ <span>Replenishment</span></a>
-    <a href="#">▤ <span>Model Performance</span></a>
-  </nav>
-  <div class="side-note"><b>Demo Environment</b><br>Data shown is synthetic and intended for academic demonstration of the ML decision-support workflow.</div>
+<aside class="side">
+ <div class="brand"><div class="logo">DR</div><div><b>Demand & Replenishment</b><small>Decision Support System</small></div></div>
+ <nav class="nav">
+  <a class="active" href="#overview">▦ Executive Overview</a>
+  <a href="#forecast">⌁ Demand Forecast</a>
+  <a href="#inventory">◫ Inventory Health</a>
+  <a href="#replenishment">↻ Replenishment</a>
+  <a href="#model">▤ Model Performance</a>
+ </nav>
+ <div class="note"><b>Browser ML Prototype</b><br>This GitHub Pages version performs calculations in the browser. Forecasts use a transparent weighted moving-average model; the production project can replace this layer with the trained XGBoost API.</div>
 </aside>
 
 <main class="main">
-  <div class="top">
-    <div>
-      <h1>Demand Prediction & Replenishment Support</h1>
-      <div class="subtitle">Weekly Product × Location intelligence • Forecast horizon: next week • Model: XGBoost Regressor</div>
-    </div>
-    <div class="actions">
-      <select id="location"><option value="All">All Locations</option><option>Multan</option><option>Lahore</option><option>Bahawalpur</option><option>Faisalabad</option></select>
-      <select id="category"><option value="All">All Categories</option><option>Beverages</option><option>Snacks</option><option>Packaged Food</option></select>
-      <button class="primary" onclick="window.print()">Export / Print</button>
-    </div>
-  </div>
-
-  <section class="kpis">
-    <div class="card kpi"><div class="kpi-label">Forecast Demand</div><div class="kpi-value">18,460</div><div class="kpi-foot"><span class="up">+6.8%</span> vs. previous week</div></div>
-    <div class="card kpi"><div class="kpi-label">Inventory Position</div><div class="kpi-value">12,840</div><div class="kpi-foot">Units across selected network</div></div>
-    <div class="card kpi"><div class="kpi-label">Stockout Risk</div><div class="kpi-value">7.4%</div><div class="kpi-foot"><span class="warn">12 products</span> require attention</div></div>
-    <div class="card kpi"><div class="kpi-label">Recommended Orders</div><div class="kpi-value">6,920</div><div class="kpi-foot">Units suggested for replenishment</div></div>
-    <div class="card kpi"><div class="kpi-label">Service Level</div><div class="kpi-value">94.2%</div><div class="kpi-foot"><span class="up">+2.1 pp</span> target: 95%</div></div>
-  </section>
-
-  <section class="grid">
-    <div class="card panel">
-      <div class="panel-head">
-        <div><div class="panel-title">Demand Forecast Trend</div><div class="panel-sub">Actual demand vs. model forecast • 12-week view</div></div>
-        <div class="legend"><span><i class="dot" style="background:#2563eb"></i>Actual</span><span><i class="dot" style="background:#0891b2"></i>Forecast</span></div>
-      </div>
-      <div class="chart-wrap">
-        <svg viewBox="0 0 760 235" preserveAspectRatio="none">
-          <g stroke="#e8edf3" stroke-width="1">
-            <line x1="45" y1="25" x2="745" y2="25"/><line x1="45" y1="70" x2="745" y2="70"/>
-            <line x1="45" y1="115" x2="745" y2="115"/><line x1="45" y1="160" x2="745" y2="160"/><line x1="45" y1="205" x2="745" y2="205"/>
-          </g>
-          <g fill="#7b8aa0" font-size="9"><text x="8" y="29">2.4k</text><text x="8" y="74">1.8k</text><text x="8" y="119">1.2k</text><text x="15" y="164">600</text><text x="28" y="209">0</text></g>
-          <polyline fill="none" stroke="#2563eb" stroke-width="3" points="50,145 110,133 170,151 230,119 290,128 350,102 410,116 470,88 530,96 590,71 650,83 710,57"/>
-          <polyline fill="none" stroke="#0891b2" stroke-width="3" stroke-dasharray="7 5" points="50,148 110,139 170,143 230,125 290,121 350,108 410,109 470,93 530,91 590,78 650,76 710,65"/>
-          <g fill="#2563eb"><circle cx="50" cy="145" r="3"/><circle cx="110" cy="133" r="3"/><circle cx="170" cy="151" r="3"/><circle cx="230" cy="119" r="3"/><circle cx="290" cy="128" r="3"/><circle cx="350" cy="102" r="3"/><circle cx="410" cy="116" r="3"/><circle cx="470" cy="88" r="3"/><circle cx="530" cy="96" r="3"/><circle cx="590" cy="71" r="3"/><circle cx="650" cy="83" r="3"/><circle cx="710" cy="57" r="3"/></g>
-          <g fill="#7b8aa0" font-size="9" text-anchor="middle"><text x="50" y="225">W1</text><text x="110" y="225">W2</text><text x="170" y="225">W3</text><text x="230" y="225">W4</text><text x="290" y="225">W5</text><text x="350" y="225">W6</text><text x="410" y="225">W7</text><text x="470" y="225">W8</text><text x="530" y="225">W9</text><text x="590" y="225">W10</text><text x="650" y="225">W11</text><text x="710" y="225">W12</text></g>
-        </svg>
-      </div>
-    </div>
-
-    <div class="card panel">
-      <div class="panel-head"><div><div class="panel-title">Model Performance</div><div class="panel-sub">Held-out test period</div></div></div>
-      <div class="metrics">
-        <div class="mini"><b>148.6</b><span>MAE (units)</span></div>
-        <div class="mini"><b>221.4</b><span>RMSE (units)</span></div>
-        <div class="mini"><b>8.7%</b><span>WAPE</span></div>
-        <div class="mini"><b>+1.9%</b><span>Forecast Bias</span></div>
-      </div>
-      <div style="margin-top:16px;font-size:10px;color:#64748b">Model accuracy</div>
-      <div class="bar"><div class="fill" style="width:91.3%;background:#2563eb"></div></div>
-      <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px;color:#64748b"><span>WAPE 8.7%</span><span>Goal ≤ 10%</span></div>
-    </div>
-  </section>
-
-  <section class="grid">
-    <div class="card panel">
-      <div class="panel-head"><div><div class="panel-title">Inventory Health</div><div class="panel-sub">Current network status by decision category</div></div></div>
-      <div class="status-grid">
-        <div class="status"><b style="color:#16a34a">74</b><span>Healthy Stock</span></div>
-        <div class="status"><b style="color:#d97706">18</b><span>Reorder Soon</span></div>
-        <div class="status"><b style="color:#dc2626">12</b><span>Stockout Risk</span></div>
-      </div>
-      <div style="margin-top:17px;font-size:10px;color:#64748b">Network stock coverage</div>
-      <div class="bar"><div class="fill" style="width:68%;background:#0891b2"></div></div>
-      <div style="font-size:11px;margin-top:7px"><b>68%</b> of monitored SKUs are above reorder point</div>
-    </div>
-    <div class="card panel">
-      <div class="panel-head"><div><div class="panel-title">Replenishment Queue</div><div class="panel-sub">Priority actions generated from forecast + inventory</div></div></div>
-      <div style="display:grid;gap:9px">
-        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #eef2f6;padding-bottom:8px"><span style="font-size:11px"><b>P014</b> • Multan</span><span class="badge red">Urgent</span></div>
-        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #eef2f6;padding-bottom:8px"><span style="font-size:11px"><b>P027</b> • Lahore</span><span class="badge amber">Review</span></div>
-        <div style="display:flex;justify-content:space-between;border-bottom:1px solid #eef2f6;padding-bottom:8px"><span style="font-size:11px"><b>P008</b> • Multan</span><span class="badge amber">Review</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="font-size:11px"><b>P041</b> • Lahore</span><span class="badge green">Planned</span></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card table-panel">
-    <div class="panel-head">
-      <div><div class="panel-title">Replenishment Recommendations</div><div class="panel-sub">Decision layer: forecast → lead-time demand → safety stock → recommended order</div></div>
-      <div class="table-controls"><input id="search" placeholder="Search product or location..." oninput="filterTable()"><button onclick="resetFilters()">Reset</button></div>
-    </div>
-    <div class="table-wrap">
-      <table id="dataTable">
-        <thead><tr><th>Product</th><th>Category</th><th>Location</th><th>Current Stock</th><th>Forecast Demand</th><th>Safety Stock</th><th>Reorder Point</th><th>Recommended Order</th><th>Status</th></tr></thead>
-        <tbody>
-          <tr><td class="product">P014</td><td>Beverages</td><td>Multan</td><td>180</td><td>620</td><td>140</td><td>510</td><td class="order">470</td><td><span class="badge red">Stockout Risk</span></td></tr>
-          <tr><td class="product">P027</td><td>Snacks</td><td>Lahore</td><td>310</td><td>540</td><td>120</td><td>440</td><td class="order">250</td><td><span class="badge amber">Reorder Soon</span></td></tr>
-          <tr><td class="product">P008</td><td>Packaged Food</td><td>Multan</td><td>420</td><td>690</td><td>150</td><td>580</td><td class="order">310</td><td><span class="badge amber">Reorder Soon</span></td></tr>
-          <tr><td class="product">P041</td><td>Beverages</td><td>Lahore</td><td>860</td><td>510</td><td>110</td><td>390</td><td class="order">0</td><td><span class="badge green">Healthy</span></td></tr>
-          <tr><td class="product">P019</td><td>Snacks</td><td>Bahawalpur</td><td>240</td><td>460</td><td>105</td><td>375</td><td class="order">245</td><td><span class="badge red">Stockout Risk</span></td></tr>
-          <tr><td class="product">P033</td><td>Packaged Food</td><td>Faisalabad</td><td>720</td><td>610</td><td>130</td><td>470</td><td class="order">0</td><td><span class="badge green">Healthy</span></td></tr>
-          <tr><td class="product">P006</td><td>Beverages</td><td>Lahore</td><td>360</td><td>570</td><td>125</td><td>465</td><td class="order">210</td><td><span class="badge amber">Reorder Soon</span></td></tr>
-          <tr><td class="product">P052</td><td>Packaged Food</td><td>Multan</td><td>1,040</td><td>580</td><td>125</td><td>440</td><td class="order">0</td><td><span class="badge green">Healthy</span></td></tr>
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <div class="footer">Academic prototype • Synthetic demonstration data • Weekly forecasting • XGBoost + rule-based replenishment layer</div>
-</main>
+<div class="top">
+ <div><h1>Demand Prediction & Replenishment Support</h1><div class="sub">Functional decision-support prototype • Product × Location × Week • Forecast → Inventory → Replenishment</div></div>
+ <div class="actions">
+  <button class="primary" id="demoBtn">Load Demo Data</button>
+  <label><input type="file" id="fileInput" accept=".csv" style="display:none"><button onclick="document.getElementById('fileInput').click()">Import CSV</button></label>
+  <button id="exportBtn">Export Recommendations</button>
+ </div>
 </div>
+<div id="notice" class="card notice"></div>
+
+<section id="overview" class="kpis">
+ <div class="card kpi"><div class="label">Forecast Demand</div><div class="value" id="kForecast">—</div><div class="foot">Next-week predicted units</div></div>
+ <div class="card kpi"><div class="label">Inventory Position</div><div class="value" id="kInv">—</div><div class="foot">Current + incoming − backorders</div></div>
+ <div class="card kpi"><div class="label">Stockout Risk</div><div class="value red" id="kRisk">—</div><div class="foot" id="kRiskFoot">Products below reorder point</div></div>
+ <div class="card kpi"><div class="label">Recommended Orders</div><div class="value" id="kOrders">—</div><div class="foot">Units suggested by decision layer</div></div>
+ <div class="card kpi"><div class="label">Service Level</div><div class="value green" id="kService">—</div><div class="foot">Products currently covered</div></div>
+</section>
+
+<section class="grid">
+ <div class="card panel" id="forecast">
+  <div class="head"><div><div class="title">Demand Forecast Trend</div><div class="desc">Aggregated historical weekly demand and calculated next-week forecast</div></div><div class="legend">Actual • Forecast</div></div>
+  <div class="chart" id="chart"><div class="empty">Load demo data or import a CSV to calculate the forecast.</div></div>
+ </div>
+ <div class="card panel" id="model">
+  <div class="head"><div><div class="title">Forecasting Engine</div><div class="desc">Browser-based transparent baseline</div></div></div>
+  <div class="metrics">
+   <div class="metric"><b id="mMAE">—</b><span>MAE (test weeks)</span></div>
+   <div class="metric"><b id="mRMSE">—</b><span>RMSE (test weeks)</span></div>
+   <div class="metric"><b id="mWAPE">—</b><span>WAPE</span></div>
+   <div class="metric"><b id="mBias">—</b><span>Forecast Bias</span></div>
+  </div>
+  <div style="margin-top:15px" class="small">Method</div>
+  <div style="margin:7px 0 4px;font-weight:700;color:#172b49">Weighted Moving Average</div>
+  <div class="small">Recent weeks receive higher weight. This keeps the static GitHub Pages demo self-contained.</div>
+  <div style="margin-top:15px" class="small">Forecast coverage</div>
+  <div class="bar" style="margin-top:7px"><div id="coverageBar" class="fill" style="width:0;background:#2563eb"></div></div>
+  <div class="small" id="coverageText" style="margin-top:5px">—</div>
+ </div>
+</section>
+
+<section class="grid" id="inventory">
+ <div class="card panel">
+  <div class="head"><div><div class="title">Inventory Health</div><div class="desc">Calculated from forecast, lead time, demand variability and stock position</div></div></div>
+  <div class="status">
+   <div><b class="green" id="healthy">—</b><span>Healthy Stock</span></div>
+   <div><b class="amber" id="soon">—</b><span>Reorder Soon</span></div>
+   <div><b class="red" id="risk">—</b><span>Stockout Risk</span></div>
+  </div>
+  <div style="margin-top:15px" class="small">SKUs at or above reorder point</div>
+  <div class="bar" style="margin-top:7px"><div id="stockBar" class="fill" style="width:0;background:#16a34a"></div></div>
+  <div class="small" id="stockText" style="margin-top:5px">—</div>
+ </div>
+ <div class="card panel">
+  <div class="head"><div><div class="title">Decision Rules</div><div class="desc">Applied automatically to every product-location row</div></div></div>
+  <div class="small" style="line-height:1.8">
+   <b>Safety Stock</b> = z × demand SD × √lead time<br>
+   <b>Reorder Point</b> = forecast daily demand × lead time + safety stock<br>
+   <b>Inventory Position</b> = current + incoming − backorders<br>
+   <b>Order Qty</b> = max(0, ROP + review demand − inventory position)<br>
+   <b>Status</b> = Risk / Reorder Soon / Healthy
+  </div>
+ </div>
+</section>
+
+<section class="card table-card" id="replenishment">
+ <div class="head">
+  <div><div class="title">Live Replenishment Recommendations</div><div class="desc">These rows are calculated from the loaded dataset — not hard-coded dashboard values.</div></div>
+  <div class="controls">
+   <input id="search" placeholder="Search product or location...">
+   <select id="locFilter"><option value="All">All Locations</option></select>
+   <select id="catFilter"><option value="All">All Categories</option></select>
+  </div>
+ </div>
+ <div class="table-wrap"><table><thead><tr>
+  <th>Product</th><th>Category</th><th>Location</th><th>Current Stock</th><th>Forecast Demand</th><th>Safety Stock</th><th>Reorder Point</th><th>Inventory Position</th><th>Recommended Order</th><th>Status</th>
+ </tr></thead><tbody id="tbody"></tbody></table></div>
+</section>
+<div class="footer">Academic prototype • Synthetic demo available • Browser calculations • Ready for GitHub Pages</div>
+</main></div>
+
 <script>
-function filterTable(){
-  const q=document.getElementById('search').value.toLowerCase();
-  const loc=document.getElementById('location').value.toLowerCase();
-  const cat=document.getElementById('category').value.toLowerCase();
-  document.querySelectorAll('#dataTable tbody tr').forEach(r=>{
-    const txt=r.innerText.toLowerCase();
-    const okQ=!q||txt.includes(q);
-    const okL=loc==='all'||r.cells[2].innerText.toLowerCase()===loc;
-    const okC=cat==='all'||r.cells[1].innerText.toLowerCase()===cat;
-    r.style.display=(okQ&&okL&&okC)?'':'none';
-  });
+const Z=1.645, REVIEW_WEEKS=1;
+let rows=[], results=[], filtered=[];
+
+function show(msg,type='info'){const n=document.getElementById('notice');n.textContent=msg;n.className='card notice show '+type}
+function num(v,d=0){const x=Number(String(v??'').replace(/,/g,''));return Number.isFinite(x)?x:d}
+function fmt(n){return Math.round(n).toLocaleString()}
+function pct(n){return (n*100).toFixed(1)+'%'}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function demoData(){
+ const products=[
+  ['P014','Beverages','Multan',180,50,0,3,25],['P027','Snacks','Lahore',310,80,0,4,22],
+  ['P008','Packaged Food','Multan',420,100,0,5,30],['P041','Beverages','Lahore',860,120,0,4,18],
+  ['P019','Snacks','Bahawalpur',240,40,0,3,24],['P033','Packaged Food','Faisalabad',720,80,0,6,28],
+  ['P006','Beverages','Lahore',360,50,0,4,21],['P052','Packaged Food','Multan',1040,150,0,5,20],
+  ['P061','Snacks','Multan',290,30,20,3,26],['P072','Beverages','Lahore',510,90,0,4,19],
+  ['P084','Packaged Food','Multan',380,60,0,5,27],['P095','Snacks','Lahore',930,110,0,3,17]
+ ];
+ rows=[];
+ const base=[430,470,450,520,500,560,540,590,575,630,610,660];
+ products.forEach((p,pi)=>{
+   const [id,cat,loc,stock,incoming,back,lead,vol]=p;
+   for(let w=1;w<=12;w++){
+     const trend=1+(w-1)*.018;
+     const seasonal=1+Math.sin((w+pi)*.8)*.08;
+     const demand=Math.max(20,Math.round(base[w-1]*trend*seasonal*(.72+pi*.045)+((w*17+pi*9)%31)-15));
+     rows.push({product_id:id,category:cat,location:loc,week:w,sales_qty:demand,current_stock:stock,incoming_inventory:incoming,backorders:back,lead_time_days:lead,demand_std:vol});
+   }
+ });
+ return rows;
 }
-function resetFilters(){
-  document.getElementById('search').value='';
-  document.getElementById('location').value='All';
-  document.getElementById('category').value='All';
-  filterTable();
+function parseCSV(text){
+ const lines=text.trim().split(/\r?\n/).filter(x=>x.trim());
+ if(lines.length<2) throw Error('CSV must contain a header and at least one data row.');
+ const split=s=>s.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(x=>x.trim().replace(/^"|"$/g,''));
+ const headers=split(lines[0]).map(x=>x.toLowerCase().replace(/\s+/g,'_'));
+ const aliases={
+  product_id:['product_id','product','sku','productid'],category:['category','product_category'],
+  location:['location','location_id','city'],week:['week','week_number','date'],
+  sales_qty:['sales_qty','sales','demand','demand_qty','units_sold'],
+  current_stock:['current_stock','closing_inventory','inventory','stock'],
+  incoming_inventory:['incoming_inventory','incoming_stock','on_order'],
+  backorders:['backorders','backorder_qty'],lead_time_days:['lead_time_days','lead_time','lead_time_day'],
+  demand_std:['demand_std','demand_std_dev','std_demand']
+ };
+ const idx={};Object.keys(aliases).forEach(k=>{idx[k]=aliases[k].map(a=>headers.indexOf(a)).find(i=>i>=0)});
+ if(idx.product_id<0||idx.product_id==null||idx.sales_qty<0||idx.sales_qty==null) throw Error('CSV needs at least Product_ID and Sales_Qty columns.');
+ return lines.slice(1).map(line=>{
+   const c=split(line);let o={};
+   Object.keys(aliases).forEach(k=>{const i=idx[k];o[k]=i!=null&&i>=0?c[i]:''});
+   return {product_id:o.product_id||'Unknown',category:o.category||'General',location:o.location||'All',week:o.week||'1',
+     sales_qty:num(o.sales_qty),current_stock:num(o.current_stock),incoming_inventory:num(o.incoming_inventory),
+     backorders:num(o.backorders),lead_time_days:num(o.lead_time_days,7),demand_std:num(o.demand_std,0)};
+ });
 }
-document.getElementById('location').addEventListener('change',filterTable);
-document.getElementById('category').addEventListener('change',filterTable);
+function groupByProduct(data){
+ const map=new Map();
+ data.forEach(r=>{const key=r.product_id+'|'+r.location;if(!map.has(key))map.set(key,[]);map.get(key).push(r)});
+ return map;
+}
+function calc(){
+ const groups=groupByProduct(rows);results=[];
+ groups.forEach(arr=>{
+   arr.sort((a,b)=>String(a.week).localeCompare(String(b.week),undefined,{numeric:true}));
+   const vals=arr.map(x=>x.sales_qty);
+   const last=vals.slice(-4);
+   const weights=[1,2,3,4].slice(4-last.length);
+   const forecast=last.reduce((s,v,i)=>s+v*weights[i],0)/weights.reduce((a,b)=>a+b,0);
+   const mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+   const sd=vals.length>1?Math.sqrt(vals.reduce((s,v)=>s+(v-mean)**2,0)/(vals.length-1)):Math.max(1,mean*.15);
+   const latest=arr[arr.length-1];
+   const lead=Math.max(1,num(latest.lead_time_days,7));
+   const daily=forecast/7;
+   const safety=Z*Math.max(sd,latest.demand_std||0)*Math.sqrt(lead/7);
+   const rop=daily*lead+safety;
+   const invPos=num(latest.current_stock)+num(latest.incoming_inventory)-num(latest.backorders);
+   const target=rop+forecast*REVIEW_WEEKS;
+   const order=Math.max(0,target-invPos);
+   let status=invPos<rop?'Stockout Risk':invPos<rop+forecast*.5?'Reorder Soon':'Healthy';
+   results.push({...latest,forecast,safety,rop,invPos,order,status,mean,sd});
+ });
+ updateUI();
+}
+function updateFilters(){
+ const lf=document.getElementById('locFilter'),cf=document.getElementById('catFilter'),oldL=lf.value,oldC=cf.value;
+ lf.innerHTML='<option value="All">All Locations</option>'+[...new Set(results.map(r=>r.location))].sort().map(x=>`<option>${esc(x)}</option>`).join('');
+ cf.innerHTML='<option value="All">All Categories</option>'+[...new Set(results.map(r=>r.category))].sort().map(x=>`<option>${esc(x)}</option>`).join('');
+ if([...lf.options].some(o=>o.value===oldL))lf.value=oldL;if([...cf.options].some(o=>o.value===oldC))cf.value=oldC;
+}
+function getFiltered(){
+ const q=document.getElementById('search').value.toLowerCase(),l=document.getElementById('locFilter').value,c=document.getElementById('catFilter').value;
+ return results.filter(r=>(!q||(r.product_id+' '+r.location+' '+r.category).toLowerCase().includes(q))&&(l==='All'||r.location===l)&&(c==='All'||r.category===c));
+}
+function renderTable(){
+ filtered=getFiltered();
+ const body=document.getElementById('tbody');
+ body.innerHTML=filtered.length?filtered.sort((a,b)=>b.order-a.order).map(r=>{
+  const cls=r.status==='Healthy'?'b-green':r.status==='Reorder Soon'?'b-amber':'b-red';
+  return `<tr><td class="product">${esc(r.product_id)}</td><td>${esc(r.category)}</td><td>${esc(r.location)}</td>
+  <td>${fmt(r.current_stock)}</td><td>${fmt(r.forecast)}</td><td>${fmt(r.safety)}</td><td>${fmt(r.rop)}</td><td>${fmt(r.invPos)}</td><td class="order">${fmt(r.order)}</td><td><span class="badge ${cls}">${r.status}</span></td></tr>`
+ }).join(''):'<tr><td colspan="10" class="empty">No products match the selected filters.</td></tr>';
+}
+function renderChart(){
+ const hist=new Map();rows.forEach(r=>hist.set(String(r.week),(hist.get(String(r.week))||0)+r.sales_qty));
+ const pts=[...hist.entries()].sort((a,b)=>Number(a[0])-Number(b[0]));
+ if(!pts.length){document.getElementById('chart').innerHTML='<div class="empty">No data</div>';return}
+ const W=760,H=245,pad={l:48,r:12,t:15,b:32},max=Math.max(...pts.map(x=>x[1]),...results.map(x=>x.forecast))*1.12;
+ const x=i=>pad.l+i*(W-pad.l-pad.r)/Math.max(pts.length-1,1), y=v=>H-pad.b-(v/max)*(H-pad.t-pad.b);
+ let svg=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><g stroke="#e8edf3">`;
+ [0,.25,.5,.75,1].forEach(v=>svg+=`<line x1="${pad.l}" y1="${y(max*v)}" x2="${W-pad.r}" y2="${y(max*v)}"/>`);
+ svg+='</g><g fill="#7b8aa0" font-size="9">';
+ [0,.25,.5,.75,1].forEach(v=>svg+=`<text x="5" y="${y(max*v)+3}">${Math.round(max*v).toLocaleString()}</text>`);
+ svg+='</g>';
+ const poly=pts.map((p,i)=>`${x(i)},${y(p[1])}`).join(' ');
+ svg+=`<polyline fill="none" stroke="#2563eb" stroke-width="3" points="${poly}"/>`;
+ pts.forEach((p,i)=>svg+=`<circle cx="${x(i)}" cy="${y(p[1])}" r="3" fill="#2563eb"/>`);
+ const f=results.reduce((a,b)=>a+b.forecast,0);
+ const lx=W-pad.r-55; svg+=`<line x1="${lx}" y1="${pad.t}" x2="${lx}" y2="${H-pad.b}" stroke="#0891b2" stroke-dasharray="5 5"/><circle cx="${lx}" cy="${y(f)}" r="4" fill="#0891b2"/><text x="${Math.min(lx+7,W-100)}" y="${y(f)-7}" fill="#0891b2" font-size="9">Next-week forecast</text>`;
+ pts.forEach((p,i)=>svg+=`<text x="${x(i)}" y="${H-9}" text-anchor="middle" fill="#7b8aa0" font-size="9">W${esc(p[0])}</text>`);
+ svg+='</svg>';document.getElementById('chart').innerHTML=svg;
+}
+function modelMetrics(){
+ const groups=groupByProduct(rows),actual=[],pred=[];
+ groups.forEach(arr=>{
+  arr.sort((a,b)=>String(a.week).localeCompare(String(b.week),undefined,{numeric:true}));
+  if(arr.length<5)return;
+  for(let i=4;i<arr.length;i++){const hist=arr.slice(Math.max(0,i-4),i).map(x=>x.sales_qty);const w=[1,2,3,4].slice(4-hist.length);const p=hist.reduce((s,v,j)=>s+v*w[j],0)/w.reduce((a,b)=>a+b,0);actual.push(arr[i].sales_qty);pred.push(p)}
+ });
+ if(!actual.length){return}
+ const errs=actual.map((a,i)=>a-pred[i]),mae=errs.reduce((s,e)=>s+Math.abs(e),0)/errs.length,rmse=Math.sqrt(errs.reduce((s,e)=>s+e*e,0)/errs.length);
+ const wape=errs.reduce((s,e)=>s+Math.abs(e),0)/Math.max(1,actual.reduce((s,a)=>s+Math.abs(a),0));
+ const bias=errs.reduce((s,e)=>s+e,0)/Math.max(1,actual.reduce((s,a)=>s+a,0));
+ document.getElementById('mMAE').textContent=fmt(mae);document.getElementById('mRMSE').textContent=fmt(rmse);document.getElementById('mWAPE').textContent=pct(wape);document.getElementById('mBias').textContent=(bias*100).toFixed(1)+'%';
+}
+function updateUI(){
+ updateFilters();
+ const f=getFiltered(),forecast=f.reduce((s,r)=>s+r.forecast,0),inv=f.reduce((s,r)=>s+r.invPos,0),orders=f.reduce((s,r)=>s+r.order,0);
+ const risk=f.filter(r=>r.status==='Stockout Risk').length,soon=f.filter(r=>r.status==='Reorder Soon').length,healthy=f.filter(r=>r.status==='Healthy').length,total=f.length||1,service=(healthy+soon)/total;
+ document.getElementById('kForecast').textContent=fmt(forecast);document.getElementById('kInv').textContent=fmt(inv);document.getElementById('kRisk').textContent=risk+' / '+f.length;document.getElementById('kRiskFoot').textContent=pct(risk/total)+' of filtered SKUs';document.getElementById('kOrders').textContent=fmt(orders);document.getElementById('kService').textContent=pct(service);
+ document.getElementById('healthy').textContent=healthy;document.getElementById('soon').textContent=soon;document.getElementById('risk').textContent=risk;
+ document.getElementById('stockBar').style.width=(service*100)+'%';document.getElementById('stockText').textContent=pct(service)+' of filtered SKUs are not currently below the reorder point.';
+ document.getElementById('coverageBar').style.width=Math.min(100,results.length?100:0)+'%';document.getElementById('coverageText').textContent=results.length+' product-location combinations calculated.';
+ renderTable();renderChart();modelMetrics();
+}
+function load(data,label){
+ rows=data;calc();show(`${label}: ${rows.length.toLocaleString()} records loaded and recommendations recalculated.`,'success');
+}
+document.getElementById('demoBtn').onclick=()=>load(demoData(),'Synthetic demo data');
+document.getElementById('fileInput').onchange=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{try{load(parseCSV(reader.result),file.name)}catch(err){show(err.message,'error')}};reader.readAsText(file)};
+['search','locFilter','catFilter'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{renderTable();const f=getFiltered();document.getElementById('kForecast').textContent=fmt(f.reduce((s,r)=>s+r.forecast,0));document.getElementById('kInv').textContent=fmt(f.reduce((s,r)=>s+r.invPos,0));document.getElementById('kOrders').textContent=fmt(f.reduce((s,r)=>s+r.order,0));const risk=f.filter(r=>r.status==='Stockout Risk').length,ok=f.filter(r=>r.status!=='Stockout Risk').length;document.getElementById('kRisk').textContent=risk+' / '+f.length;document.getElementById('kService').textContent=pct(f.length?ok/f.length:0)}));
+document.getElementById('exportBtn').onclick=()=>{
+ if(!results.length){show('Load demo data or import a CSV first.','error');return}
+ const out=getFiltered();
+ if(!out.length){show('There are no rows matching the current filters. Reset the filters and try again.','error');return}
+
+ const head=['Product_ID','Category','Location','Current_Stock','Forecast_Demand','Safety_Stock','Reorder_Point','Inventory_Position','Recommended_Order','Status'];
+ const lines=[head.join(',')].concat(out.map(r=>[
+   r.product_id,r.category,r.location,r.current_stock,r.forecast.toFixed(2),
+   r.safety.toFixed(2),r.rop.toFixed(2),r.invPos,r.order.toFixed(2),r.status
+ ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')));
+
+ const csv='\\ufeff'+lines.join('\\r\\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;
+ a.download='replenishment_recommendations.csv';
+ a.style.display='none';
+ document.body.appendChild(a);
+ a.click();
+
+ // Keep the object URL alive long enough for Chrome/Edge to start the download.
+ setTimeout(()=>{
+   URL.revokeObjectURL(url);
+   a.remove();
+ },1000);
+
+ show(`Exported ${out.length.toLocaleString()} recommendation${out.length===1?'':'s'} to replenishment_recommendations.csv.`,'success');
+};
+load(demoData(),'Synthetic demo data');
 </script>
+
+<div id="tooltip" class="tooltip"></div>
+<div id="modal" class="modal">
+ <div class="modal-box">
+  <div class="modal-head">
+   <div><div class="title" id="modalTitle">Product Detail</div><div class="desc" id="modalSub"></div></div>
+   <button class="close" id="modalClose">×</button>
+  </div>
+  <div class="detail-grid" id="modalGrid"></div>
+  <div style="margin-top:18px"><div class="small">Decision explanation</div><div id="modalReason" style="margin-top:6px;font-size:12px;line-height:1.6;color:#334155"></div></div>
+ </div>
+</div>
 </body>
 </html>
